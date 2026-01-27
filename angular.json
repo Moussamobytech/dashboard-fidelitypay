@@ -28,12 +28,7 @@
             ],
             "styles": [
               "src/styles.scss"
-            ],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
-            }
+            ]
           },
           "configurations": {
             "production": {
@@ -61,6 +56,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "buildTarget": "fidelity-pay-dashboard:build:production"
@@ -92,5 +90,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "feee03a7-9a53-4e8c-ad4f-ebe4c902e2f6"
   }
 }

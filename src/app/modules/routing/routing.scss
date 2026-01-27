@@ -1,0 +1,133 @@
+.page-header {
+    margin-bottom: 2rem;
+
+    h1 {
+        font-size: 1.875rem;
+    }
+
+    .subtitle {
+        color: var(--text-muted);
+    }
+}
+
+.routing-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 1.5rem;
+}
+
+.full-width {
+    grid-column: span 2;
+}
+
+.priority-badge {
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.perf-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.perf-item {
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    .route-name {
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+
+            .label {
+                font-size: 0.7rem;
+                color: var(--text-muted);
+                text-transform: uppercase;
+            }
+
+            .val {
+                font-weight: 600;
+                font-size: 0.9rem;
+            }
+
+            .val.success {
+                color: var(--success);
+            }
+        }
+    }
+}
+
+.fallback-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .title {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .desc {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .toggle {
+        width: 40px;
+        height: 20px;
+        background: #cbd5e1;
+        border-radius: 20px;
+        position: relative;
+        cursor: pointer;
+
+        &::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.2s;
+        }
+
+        &.active {
+            background: var(--success);
+
+            &::after {
+                left: 22px;
+            }
+        }
+    }
+
+    .val-box {
+        padding: 0.25rem 0.5rem;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+}

@@ -1,0 +1,102 @@
+<div class="page-header">
+    <div>
+        <h1>Intelligence de Routage</h1>
+        <p class="subtitle">Optimisez vos transactions par coût, vitesse et fiabilité</p>
+    </div>
+</div>
+
+<div class="routing-grid">
+    <div class="card full-width">
+        <div class="card-header">
+            <h3>Priorisation des Routes</h3>
+            <button class="btn btn-primary btn-sm">Nouvelle Règle</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pays</th>
+                        <th>Opérateur Principal</th>
+                        <th>Priorité</th>
+                        <th>Stratégie</th>
+                        <th>Fallback</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (rule of routingRules; track rule.operator) {
+                    <tr>
+                        <td>{{ rule.country }}</td>
+                        <td><strong>{{ rule.operator }}</strong></td>
+                        <td><span class="priority-badge">#{{ rule.priority }}</span></td>
+                        <td>{{ rule.strategy }}</td>
+                        <td>{{ rule.fallback }}</td>
+                        <td>
+                            <span class="badge" [class.badge-success]="rule.status === 'Actif'"
+                                [class.badge-warning]="rule.status === 'Alerte'">
+                                {{ rule.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Comparatif Performance</h3>
+        </div>
+        <div class="perf-list">
+            @for (data of performanceData; track data.route) {
+            <div class="perf-item">
+                <div class="route-name">{{ data.route }}</div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="label">Coût</span>
+                        <span class="val">{{ data.cost }}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Latence</span>
+                        <span class="val">{{ data.latency }}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Succès</span>
+                        <span class="val success">{{ data.success }}</span>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Configuration Fallback</h3>
+        </div>
+        <div class="fallback-settings">
+            <div class="setting-item">
+                <div class="info">
+                    <p class="title">Bascule Automatique</p>
+                    <p class="desc">Active le passage au fallback après échec</p>
+                </div>
+                <div class="toggle active"></div>
+            </div>
+            <div class="setting-item">
+                <div class="info">
+                    <p class="title">Retry Intelligent</p>
+                    <p class="desc">3 tentatives pour les codes erreurs 5xx</p>
+                </div>
+                <div class="toggle active"></div>
+            </div>
+            <div class="setting-item">
+                <div class="info">
+                    <p class="title">Timeout Critique</p>
+                    <p class="desc">Basculer si pas de réponse après 10s</p>
+                </div>
+                <div class="val-box">10s</div>
+            </div>
+        </div>
+    </div>
+</div>

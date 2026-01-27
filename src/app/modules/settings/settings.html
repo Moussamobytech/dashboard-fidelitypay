@@ -1,0 +1,39 @@
+<div class="page-header">
+    <h1>Paramètres</h1>
+    <p class="subtitle">Configuration générale et préférences système</p>
+</div>
+
+<div class="settings-container">
+    <div class="card settings-card">
+        <div class="card-header">
+            <h3>Configuration Webhook</h3>
+            <span class="badge badge-info">Système</span>
+        </div>
+        <div class="card-body">
+            <p class="description">
+                Configurez l'URL du webhook pour recevoir les notifications de paiement en temps réel.
+                Le système enverra une requête POST avec les détails de la transaction à cette adresse.
+            </p>
+
+            <div class="form-group">
+                <label for="webhookUrl">URL du Webhook</label>
+                <div class="input-wrapper">
+                    <span class="material-icons-outlined prefix">link</span>
+                    <input type="text" id="webhookUrl" [value]="webhookUrl()" (input)="updateWebhookUrl($event)"
+                        placeholder="https://votre-api.com/webhook/fidelity-pay">
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" (click)="saveSettings()">
+                    <span class="material-icons-outlined">save</span>
+                    Enregistrer les modifications
+                </button>
+                <button class="btn btn-outline" (click)="testWebhook()">
+                    <span class="material-icons-outlined">send</span>
+                    Tester le Webhook
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

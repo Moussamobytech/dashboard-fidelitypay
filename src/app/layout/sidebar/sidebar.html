@@ -1,0 +1,25 @@
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">F</div>
+    <span class="logo-text">Fidelity<span>Pay</span></span>
+  </div>
+
+  <nav class="nav">
+    @for (item of menuItems; track item.label) {
+      <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
+        <span class="material-icons-outlined">{{ item.icon }}</span>
+        <span class="label">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <div class="footer">
+    <div class="user-info">
+      <div class="avatar">AD</div>
+      <div class="details">
+        <p class="name">Admin User</p>
+        <p class="role">Super Admin</p>
+      </div>
+    </div>
+  </div>
+</div>

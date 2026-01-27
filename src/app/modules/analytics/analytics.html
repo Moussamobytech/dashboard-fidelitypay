@@ -1,0 +1,100 @@
+<div class="analytics-container">
+    <header class="page-header">
+        <div class="header-content">
+            <h1>Analytics & Insights</h1>
+            <p class="subtitle">Performance comparée des agrégateurs de paiement</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline">
+                <span class="material-icons-outlined">filter_list</span>
+                Filtres
+            </button>
+            <button class="btn btn-primary">
+                <span class="material-icons-outlined">download</span>
+                Exporter Rapport
+            </button>
+        </div>
+    </header>
+
+    <!-- Stats Overview -->
+    <!-- <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon volume">
+                <span class="material-icons-outlined">payments</span>
+            </div>
+            <div class="stat-info">
+                <span class="label">Volume Total</span>
+                <h2 class="value">{{ totalVolume | number:'1.0-0' }} <small>FCFA</small></h2>
+                <span class="trend positive">
+                    <span class="material-icons-outlined">trending_up</span> +12.5%
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon rate">
+                <span class="material-icons-outlined">check_circle</span>
+            </div>
+            <div class="stat-info">
+                <span class="label">Taux de Succès</span>
+                <h2 class="value">{{ successRate | number:'1.1-1' }}%</h2>
+                <span class="trend positive">
+                    <span class="material-icons-outlined">trending_up</span> +0.8%
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon aggregators">
+                <span class="material-icons-outlined">hub</span>
+            </div>
+            <div class="stat-info">
+                <span class="label">Agrégateurs Actifs</span>
+                <h2 class="value">{{ activeAggregators }}</h2>
+                <span class="trend neutral">Stable</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon latency">
+                <span class="material-icons-outlined">speed</span>
+            </div>
+            <div class="stat-info">
+                <span class="label">Latence Moyenne</span>
+                <h2 class="value">{{ avgLatency }}s</h2>
+                <span class="trend positive">
+                    <span class="material-icons-outlined">trending_down</span> -0.2s
+                </span>
+            </div>
+        </div>
+    </div> -->
+
+    <!-- Charts Section -->
+    <div class="charts-grid">
+        <div class="card chart-card">
+            <div class="card-header">
+                <h3>Transactions Kkiapay</h3>
+                <div class="chart-legend-custom">
+                    <span class="dot kkiapay"></span> Volume
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas baseChart [data]="kkiapayChartData" [options]="barChartOptions" [type]="barChartType">
+                </canvas>
+            </div>
+        </div>
+
+        <div class="card chart-card">
+            <div class="card-header">
+                <h3>Transactions PayDunya</h3>
+                <div class="chart-legend-custom">
+                    <span class="dot paydunya"></span> Volume
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas baseChart [data]="paydunyaChartData" [options]="barChartOptions" [type]="barChartType">
+                </canvas>
+            </div>
+        </div>
+    </div>
+</div>

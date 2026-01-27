@@ -1,0 +1,38 @@
+<div class="page-header">
+    <h1>Logs Transactionnels</h1>
+    <p class="subtitle">Détails techniques de l'orchestration des paiements</p>
+</div>
+
+<div class="card">
+    <div class="log-filters">
+        <div class="filter-group">
+            <input type="text" placeholder="Filtrer par message, ID, route...">
+            <select>
+                <option>Tous les niveaux</option>
+                <option>INFO</option>
+                <option>WARNING</option>
+                <option>ERROR</option>
+            </select>
+        </div>
+        <div class="date-filters">
+            <button class="btn btn-outline">Dernier 24h</button>
+            <button class="btn btn-outline">Filtrer par date</button>
+        </div>
+    </div>
+
+    <div class="logs-container">
+        @for (log of logs; track log.timestamp) {
+        <div class="log-row" [class]="log.level.toLowerCase()">
+            <div class="log-meta">
+                <span class="timestamp">{{ log.timestamp }}</span>
+                <span class="level">{{ log.level }}</span>
+                <span class="context">[{{ log.context }}]</span>
+            </div>
+            <div class="log-message">
+                <p class="msg">{{ log.message }}</p>
+                <p class="details">{{ log.details }}</p>
+            </div>
+        </div>
+        }
+    </div>
+</div>

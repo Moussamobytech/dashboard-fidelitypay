@@ -1,0 +1,23 @@
+<header class="header">
+    <div class="search-bar">
+        <span class="material-icons-outlined">search</span>
+        <input type="text" placeholder="Rechercher une transaction, un log...">
+    </div>
+
+    <div class="actions">
+        <button class="btn-icon">
+            <span class="material-icons-outlined">notifications</span>
+            <span class="dot"></span>
+        </button>
+        <button class="btn-icon">
+            <span class="material-icons-outlined">help_outline</span>
+        </button>
+
+        <div class="divider"></div>
+
+        <div class="date-display">
+            <span class="material-icons-outlined">calendar_today</span>
+            <span>{{ currentDate | date:'dd MMM yyyy' }}</span>
+        </div>
+    </div>
+</header>
