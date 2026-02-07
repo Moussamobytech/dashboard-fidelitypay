@@ -41,8 +41,8 @@
         <h3>Routes</h3>
         <div class="filters">
             <div class="filter-item">
-                <label>Période</label>
-                <select (change)="setPeriod($event)">
+                <label for="period-select">Période</label>
+                <select id="period-select" (change)="setPeriod($event)">
                     <option value="24h">Aujourd'hui</option>
                     <option value="week">Cette semaine</option>
                     <option value="month">Ce mois</option>
@@ -50,8 +50,8 @@
                 </select>
             </div>
             <div class="filter-item">
-                <label>Provider</label>
-                <select (change)="setProviderFilter($event)">
+                <label for="provider-select">Provider</label>
+                <select id="provider-select" (change)="setProviderFilter($event)">
                     <option value="">Tous</option>
                     @for(p of providers(); track p) {
                     <option [value]="p">{{p}}</option>
@@ -59,8 +59,8 @@
                 </select>
             </div>
             <div class="filter-item">
-                <label>Pays</label>
-                <select (change)="setCountryFilter($event)">
+                <label for="country-select">Pays</label>
+                <select id="country-select" (change)="setCountryFilter($event)">
                     <option value="">Tous</option>
                     @for(c of countries(); track c) {
                     <option [value]="c">{{getCountry(c)}}</option>
@@ -94,8 +94,7 @@
                     <td>
                         <div class="operator-cell">
                             <span class="operator-icon" [attr.data-operator]="route.operator">
-                                <span class="material-icons-outlined" style="font-size: 18px;">{{
-                                    getOperatorIcon(route.operator) }}</span>
+                                <span class="material-icons-outlined icon-small">{{ getOperatorIcon(route.operator) }}</span>
                             </span>
                             <span class="operator-name">{{ route.operator }}</span>
                         </div>
@@ -113,9 +112,10 @@
                     <td>{{ getFallbackRate(route) }}</td>
                     <td>{{ (route.avgLatency / 1000).toFixed(2) }}s</td>
                     <td>
-                        <span class="status-badge" [class.active]="route.availability && route.avgLatency <= 1000"
-                            [class.degraded]="route.availability && route.avgLatency > 1000"
-                            [class.down]="!route.availability">
+                        <span class="status-badge"
+                            [class.active]="getRouteStatus(route) === 'Stable'"
+                            [class.degraded]="getRouteStatus(route) === 'Dégradé'"
+                            [class.down]="getRouteStatus(route) === 'Down'">
                             {{ getRouteStatus(route) }}
                         </span>
                     </td>

@@ -140,8 +140,10 @@ export class DashboardOverviewComponent implements OnInit {
         const totalCount = filteredPayments.length;
         const successRate = totalCount > 0 ? (successCount / totalCount) * 100 : 0;
 
-        const paymentsWithFallback = filteredPayments.filter(p => p.status === PaymentStatus.SUCCESS && (p as any).usedFallback).length;
-        const fallbackRate = successCount > 0 ? (paymentsWithFallback / successCount) * 100 : 0;
+        // If payments don't include an explicit `usedFallback` flag, treat fallback rate as unknown
+        const hasUsedFallbackFlag = filteredPayments.some(p => (p as any).usedFallback !== undefined);
+        const paymentsWithFallback = hasUsedFallbackFlag ? filteredPayments.filter(p => p.status === PaymentStatus.SUCCESS && (p as any).usedFallback).length : 0;
+        const fallbackRate = hasUsedFallbackFlag && successCount > 0 ? (paymentsWithFallback / successCount) * 100 : NaN;
 
         const latencies = filteredPayments
             .map(p => p.providerResponseTimeMs)
@@ -154,7 +156,7 @@ export class DashboardOverviewComponent implements OnInit {
             const next = [...current];
             next[0] = { ...next[0], value: `${totalVolume.toLocaleString()} F`, trend: 'up' };
             next[1] = { ...next[1], value: `${successRate.toFixed(1)}%`, trend: successRate > 90 ? 'up' : 'down' };
-            next[2] = { ...next[2], value: `${fallbackRate.toFixed(1)}%`, trend: fallbackRate > 0 ? 'up' : 'neutral' };
+            next[2] = { ...next[2], value: Number.isNaN(fallbackRate) ? 'N/A' : `${fallbackRate.toFixed(1)}%`, trend: (Number.isNaN(fallbackRate) || fallbackRate === 0) ? 'neutral' : 'up' };
             next[3] = { ...next[3], value: `${(avgLatency / 1000).toFixed(2)}s`, trend: avgLatency < 500 ? 'up' : 'down' };
             return next;
         });

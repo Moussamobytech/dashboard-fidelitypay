@@ -30,10 +30,29 @@ export class MonitoringComponent implements OnInit {
     // Failures Chart Signals
     failurePeriod = signal<string>('24h');
 
-    // Computed Counts
-    activeRoutesCount = computed(() => this.routes().filter(r => r.availability && r.avgLatency <= 1000).length);
-    degradedRoutesCount = computed(() => this.routes().filter(r => r.availability && r.avgLatency > 1000).length);
-    downRoutesCount = computed(() => this.routes().filter(r => !r.availability).length);
+    // Canonical status helper and Computed Counts
+    getCanonicalStatus(route: Route): 'ACTIVE' | 'DEGRADED' | 'DOWN' {
+        const backendStatus = (route as any).status || (route as any).getStatus?.();
+        if (backendStatus) {
+            const s = String(backendStatus).toUpperCase();
+            if (s === 'DOWN') return 'DOWN';
+            if (s === 'DEGRADE' || s === 'DEGRADED') return 'DEGRADED';
+            if (s === 'STABLE' || s === 'ACTIVE') return 'ACTIVE';
+        }
+
+        if (!route.availability) return 'DOWN';
+
+        const isLatencyHigh = (route.avgLatency || 0) > 1000;
+        const isFailureHigh = (route.failureRate || 0) > 0.1;
+
+        if (isLatencyHigh || isFailureHigh) return 'DEGRADED';
+
+        return 'ACTIVE';
+    }
+
+    activeRoutesCount = computed(() => this.routes().filter(r => this.getCanonicalStatus(r) === 'ACTIVE').length);
+    degradedRoutesCount = computed(() => this.routes().filter(r => this.getCanonicalStatus(r) === 'DEGRADED').length);
+    downRoutesCount = computed(() => this.routes().filter(r => this.getCanonicalStatus(r) === 'DOWN').length);
 
     // Derived Lists for Dropdowns
     providers = computed(() => [...new Set(this.routes().map(r => r.provider || 'UNKNOWN'))].sort());
@@ -44,12 +63,8 @@ export class MonitoringComponent implements OnInit {
         let list = this.routes();
 
         // 1. Status Filter (from Cards)
-        if (this.selectedStatusFilter() === 'ACTIVE') {
-            list = list.filter(r => r.availability && r.avgLatency <= 1000);
-        } else if (this.selectedStatusFilter() === 'DEGRADED') {
-            list = list.filter(r => r.availability && r.avgLatency > 1000);
-        } else if (this.selectedStatusFilter() === 'DOWN') {
-            list = list.filter(r => !r.availability);
+        if (this.selectedStatusFilter()) {
+            list = list.filter(r => this.getCanonicalStatus(r) === this.selectedStatusFilter());
         }
 
         // 2. Provider Filter
@@ -60,7 +75,7 @@ export class MonitoringComponent implements OnInit {
         // 3. Country Filter
         if (this.selectedCountry()) {
             const filterPretty = this.getCountry(this.selectedCountry());
-            list = list.filter(r => this.getCountry((r as any).countryName || r.country || r.name) === filterPretty);
+            list = list.filter(r => this.getCountry((r as any).countryName || r.country) === filterPretty);
         }
 
 
@@ -122,7 +137,7 @@ export class MonitoringComponent implements OnInit {
                 const enrichedRoutes = data.map(route => ({
                     ...route,
                     successRate: route.failureRate !== undefined ? `${((1 - route.failureRate) * 100).toFixed(1)}%` : '100%',
-                    countryName: this.getCountry(route.country || route.name || route)
+                    countryName: this.getCountry(route.country || route.countryName || null)
                 }));
                 this.routes.set(enrichedRoutes);
                 // After loading routes, load failures to potentially further enrich country info
@@ -138,7 +153,7 @@ export class MonitoringComponent implements OnInit {
             const enriched = routes.map(r => ({
                 ...r,
                 successRate: r.failureRate !== undefined ? `${((1 - r.failureRate) * 100).toFixed(1)}%` : '100%',
-                countryName: this.getCountry(r.country || r.name || r)
+                countryName: this.getCountry(r.country || r.countryName || null)
             }));
             this.routes.set(enriched);
             this.loadFailures(); // Refresh enrichment from recent payments
@@ -185,19 +200,40 @@ export class MonitoringComponent implements OnInit {
 
                 // 2. Mise à jour des routes avec les infos de pays issues des paiements
                 const currentRoutes = this.routes();
+
+                // Analyse des paiements pour calculer des métriques par route (ex: fallback usage)
+                const hasUsedFallbackFlag = normalized.some(p => (p as any).usedFallback !== undefined);
+                const statsByRoute = new Map<string, { total: number; fallback: number }>();
+
+                if (hasUsedFallbackFlag) {
+                    normalized.forEach(p => {
+                        const routeName = p.extractedRouteName || null;
+                        if (!routeName) return;
+                        const key = String(routeName);
+                        const existing = statsByRoute.get(key) || { total: 0, fallback: 0 };
+                        existing.total += 1;
+                        if ((p as any).usedFallback) existing.fallback += 1;
+                        statsByRoute.set(key, existing);
+                    });
+                }
+
                 const enriched = currentRoutes.map(route => {
-                    // On cherche un paiement qui a utilisé cette route
+                    // On cherche un paiement qui a utilisé cette route pour inférer le pays si manquant
                     const sample = normalized.find(p =>
                         p.extractedRouteName === route.name ||
                         (p.provider === route.provider && p.operator === route.operator)
                     );
 
-                    // Si on a un paiement, on prend son pays, sinon on garde l'existant
-                    const countrySource = sample?.extractedCountry || route.country || route.name;
+                    const countrySource = sample?.extractedCountry || route.country || route.countryName || null;
+
+                    const routeStats = statsByRoute.get(route.name || '') || null;
+                    const fallbackRate = routeStats && routeStats.total > 0 ? (routeStats.fallback / routeStats.total) : undefined;
 
                     return {
                         ...route,
-                        countryName: this.getCountry(countrySource)
+                        countryName: this.getCountry(countrySource),
+                        // Ne définir fallbackRate que si on a des données issues des paiements
+                        ...(fallbackRate !== undefined ? { fallbackRate } : {})
                     };
                 });
 
@@ -344,7 +380,8 @@ export class MonitoringComponent implements OnInit {
         if (route.fallbackRate !== undefined) {
             return `${(route.fallbackRate * 100).toFixed(1)}%`;
         }
-        return '0.0%';
+        // If backend did not provide a fallback rate, show N/A to indicate unknown
+        return 'N/A';
     }
 
     getLastFailure(route: Route): string {
@@ -387,14 +424,9 @@ export class MonitoringComponent implements OnInit {
     }
 
     getRouteStatus(route: Route): string {
-        if (!route.availability) return 'Down';
-
-        // Une route est dégradée si latence > 1s OU taux d'échec > 10%
-        const isLatencyHigh = route.avgLatency > 1000;
-        const isFailureHigh = route.failureRate && route.failureRate > 0.1;
-
-        if (isLatencyHigh || isFailureHigh) return 'Dégradé';
-
+        const status = this.getCanonicalStatus(route);
+        if (status === 'DOWN') return 'Down';
+        if (status === 'DEGRADED') return 'Dégradé';
         return 'Stable';
     }
 

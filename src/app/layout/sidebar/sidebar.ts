@@ -15,8 +15,8 @@ export class SidebarComponent {
     { icon: 'payments', label: 'Transactions', route: '/transactions' },
     // { icon: 'router', label: 'Routing', route: '/routing' },
     { icon: 'router', label: 'Monitoring', route: '/monitoring' },
-    { icon: 'analytics', label: 'Analytics', route: '/analytics' },
-    { icon: 'description', label: 'Logs', route: '/logs' },
+    // { icon: 'analytics', label: 'Analytics', route: '/analytics' },
+    // { icon: 'description', label: 'Logs', route: '/logs' },
     // { icon: 'settings', label: 'Settings', route: '/settings' },
   ];
 }

@@ -123,7 +123,7 @@ export class TransactionsComponent implements OnInit {
     country = signal('');
 
     // Derived
-    operators = computed(() => [...new Set(this.transactions().map(t => t.operator))].sort());
+    operators = computed(() => [...new Set(this.transactions().map(t => t.operator).filter(op => !!op))].sort());
     providers = computed(() => [...new Set(this.transactions().map(t => t.provider).filter(p => !!p))].sort());
     countries = signal<string[]>([]);
 
@@ -174,6 +174,7 @@ export class TransactionsComponent implements OnInit {
         this.loadCountries();
     }
 
+
     loadCountries() {
         this.paymentService.getPaymentCountries().subscribe({
             next: (data) => this.countries.set(data),
@@ -215,7 +216,8 @@ export class TransactionsComponent implements OnInit {
     setProvider(e: any) { this.provider.set(e.target.value); }
     setOperator(e: any) { this.operator.set(e.target.value); }
     setStatus(e: any) { this.status.set(e.target.value); }
-    setCountry(e: any) { this.country.set(e.target.value); }
+
+    setCountry(e: any) { const v = e.target.value; this.country.set(v); }
 
     getLatency(txn: any): string {
         const l = txn.providerResponseTimeMs ?? txn.latence ?? txn.routeLatency ?? 0;
