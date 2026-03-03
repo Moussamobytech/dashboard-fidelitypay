@@ -21,18 +21,21 @@
     </div>
 
     <div class="logs-container">
-        @for (log of logs; track log.timestamp) {
-        <div class="log-row" [class]="log.level.toLowerCase()">
+        @for (log of logs(); track log.id) {
+        <div class="log-row" [class]="log.status.toLowerCase()">
             <div class="log-meta">
                 <span class="timestamp">{{ log.timestamp }}</span>
-                <span class="level">{{ log.level }}</span>
-                <span class="context">[{{ log.context }}]</span>
+                <span class="level">{{ log.status }}</span>
+                <span class="context">[{{ log.routeUsed }}]</span>
             </div>
             <div class="log-message">
                 <p class="msg">{{ log.message }}</p>
-                <p class="details">{{ log.details }}</p>
+                <p class="details">ID: {{ log.paymentId }} | Latence: {{ log.responseTime }}ms</p>
             </div>
         </div>
+        }
+        @if (logs().length === 0) {
+        <div class="empty-state">Aucun log trouvé.</div>
         }
     </div>
 </div>

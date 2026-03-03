@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { Payment, PaymentInitiateRequest, PaymentResponseDTO } from '../models/payment.model';
 
 @Injectable({
@@ -51,5 +51,23 @@ export class PaymentService {
     getPaymentCountries(): Observable<string[]> {
         return this.http.get<string[]>(`${this.apiUrl}/payments/countries`);
     }
-}
 
+    getPaymentsByUser(userId: string): Observable<Payment[]> {
+        return this.http.get<Payment[]>(`${this.apiUrl}/payments`, {
+            params: { userId }
+        }).pipe(
+            map((payments: any[]) => {
+                // Le backend filtre maintenant par userId si passé (pour Admin)
+                // ou par user context (pour Developer). On ne fait plus de filtre manuel ici.
+                return (payments || []).map(d => {
+                    const data = d.payment ? d.payment : d;
+                    return {
+                        ...data,
+                        // Correction mapping latence (different fields according to backend version)
+                        routeLatency: data.latence ?? data.providerResponseTimeMs ?? d.routeLatency ?? data.latency ?? 0
+                    } as Payment;
+                });
+            })
+        );
+    }
+}

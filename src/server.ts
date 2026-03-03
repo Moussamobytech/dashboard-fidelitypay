@@ -40,9 +40,9 @@ app.use(
  */
 app.use((req: Request, res: Response, next: NextFunction) => {
   angularApp
-    .handle(req)
+    .handle(req as any)
     .then((response: any) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
+      response ? writeResponseToNodeResponse(response, res as any) : next(),
     )
     .catch(next);
 });

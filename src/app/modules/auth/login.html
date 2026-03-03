@@ -1,0 +1,45 @@
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="logo">
+                <div class="logo-icon">F</div>
+                <span class="logo-text">Fidelity<span>Pay</span></span>
+            </div>
+            <h1>Bon retour</h1>
+            <p>Accédez à votre console de paiement.</p>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <div class="form-group">
+                <label for="email">Adresse Email</label>
+                <div class="input-container">
+                    <span class="material-icons-outlined">mail</span>
+                    <input type="email" id="email" formControlName="email" placeholder="nom@entreprise.com">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between;">
+                    <label for="password">Mot de Passe</label>
+                    <a href="#" class="forgot-link">Oublié ?</a>
+                </div>
+                <div class="input-container">
+                    <span class="material-icons-outlined">lock</span>
+                    <input type="password" id="password" formControlName="password" placeholder="Votre mot de passe">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary full-width" [disabled]="!loginForm.valid || isLoading()">
+                {{ isLoading() ? 'Connexion en cours...' : 'Se connecter' }}
+            </button>
+
+            <div *ngIf="errorMessage()" class="error-message">
+                {{ errorMessage() }}
+            </div>
+        </form>
+
+        <div class="auth-footer">
+            Pas encore de compte ? <a routerLink="/register">S'inscrire</a>
+        </div>
+    </div>
+</div>

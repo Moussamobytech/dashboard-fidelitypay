@@ -98,11 +98,10 @@ export class AnalyticsComponent implements OnInit {
     }
 
     calculateStats(payments: Payment[]) {
-        if (payments.length === 0) {
-            // Mock stats for demo if no real data
-            this.totalVolume = 1250000;
-            this.successRate = 98.4;
-            this.avgLatency = 1.2;
+        if (!payments || payments.length === 0) {
+            this.totalVolume = 0;
+            this.successRate = 0;
+            this.avgLatency = 0;
             return;
         }
 

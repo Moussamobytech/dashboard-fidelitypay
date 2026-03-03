@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -10,13 +11,29 @@ import { RouterModule } from '@angular/router';
   styleUrls: ['./sidebar.scss']
 })
 export class SidebarComponent {
-  menuItems = [
-    { icon: 'dashboard', label: 'Dashboard', route: '/dashboard' },
-    { icon: 'payments', label: 'Transactions', route: '/transactions' },
-    // { icon: 'router', label: 'Routing', route: '/routing' },
-    { icon: 'router', label: 'Monitoring', route: '/monitoring' },
-    // { icon: 'analytics', label: 'Analytics', route: '/analytics' },
-    // { icon: 'description', label: 'Logs', route: '/logs' },
-    // { icon: 'settings', label: 'Settings', route: '/settings' },
-  ];
+
+  readonly authService = inject(AuthService);
+
+  readonly menuItems = computed(() => {
+    const role = this.authService.userRole();
+    const items = [];
+
+    if (role === 'DEVELOPER') {
+      items.push({ icon: 'dashboard', label: 'Dashboard', route: '/developer-dashboard' });
+      items.push({ icon: 'payments', label: 'Transactions', route: '/developer-transactions' });
+      items.push({ icon: 'router', label: 'Monitoring', route: '/developer-monitoring' });
+      items.push({ icon: 'code', label: 'Intégration & Clés', route: '/developers' });
+    } else {
+      items.push({ icon: 'dashboard', label: 'Dashboard', route: '/dashboard' });
+      items.push({ icon: 'payments', label: 'Transactions', route: '/transactions' });
+      items.push({ icon: 'router', label: 'Monitoring', route: '/monitoring' });
+      items.push({ icon: 'code', label: 'Développeurs', route: '/developers' });
+    }
+
+    return items;
+  });
+
+  logout(): void {
+    this.authService.logout();
+  }
 }

@@ -5,21 +5,26 @@
   </div>
 
   <nav class="nav">
-    @for (item of menuItems; track item.label) {
-      <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
-        <span class="material-icons-outlined">{{ item.icon }}</span>
-        <span class="label">{{ item.label }}</span>
-      </a>
+    @for (item of menuItems(); track item.label) {
+    <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
+      <span class="material-icons-outlined">{{ item.icon }}</span>
+      <span class="label">{{ item.label }}</span>
+    </a>
     }
   </nav>
 
   <div class="footer">
     <div class="user-info">
-      <div class="avatar">AD</div>
+      <div class="avatar">{{ authService.userInitials() }}</div>
       <div class="details">
-        <p class="name">Admin User</p>
-        <p class="role">Super Admin</p>
+        <p class="name">{{ authService.userFullName() }}</p>
+        <p class="role role-badge" [attr.data-role]="authService.userRole()">
+          {{ authService.roleLabel() }}
+        </p>
       </div>
     </div>
+    <button class="logout-btn" (click)="logout()" title="Se déconnecter">
+      <span class="material-icons-outlined">logout</span>
+    </button>
   </div>
 </div>

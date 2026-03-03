@@ -1,0 +1,94 @@
+<div class="page-header">
+    <div class="header-content">
+        <h1>Mes Transactions</h1>
+        <p class="subtitle">Historique de vos paiements effectués via l'API Fidelity Pay</p>
+    </div>
+</div>
+
+
+<div class="card filters-card">
+    <div class="filter-group">
+        <label>Période</label>
+        <select (change)="setPeriod($event)">
+            <option value="all">Toutes</option>
+            <option value="24h">Aujourd'hui</option>
+            <option value="week">Cette semaine</option>
+            <option value="month">Ce mois</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Pays</label>
+        <select (change)="setCountry($event)">
+            <option value="">Tous</option>
+            @for(c of countries(); track c) {
+            <option [value]="c">{{getCountry(c)}}</option>
+            }
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Status</label>
+        <select (change)="setStatus($event)">
+            <option value="">Tous</option>
+            <option value="SUCCESS">Succès</option>
+            <option value="FAILED">Échec</option>
+            <option value="PENDING">En cours</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Opérateur</label>
+        <select (change)="setOperator($event)">
+            <option value="">Tous</option>
+            @for(op of operators(); track op) {
+            <option [value]="op">{{ op }}</option>
+            }
+        </select>
+    </div>
+</div>
+
+<div class="card table-card">
+    @if (isLoading()) {
+    <div class="loading-state">
+        <span class="material-icons-outlined spinning">sync</span>
+        <p>Chargement de vos transactions...</p>
+    </div>
+    } @else {
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Pays</th>
+                    <th>Opérateur</th>
+                    <th>Montant</th>
+                    <th>Status</th>
+                    <th>Latence</th>
+                    <th>Date & Heure</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (txn of filteredTransactions(); track txn.paymentId) {
+                <tr>
+                    <td class="mono">{{ txn.paymentId.substring(0, 8) }}…</td>
+                    <td>{{ $any(txn).countryName || 'N/A' }}</td>
+                    <td>{{ txn.operator || '-' }}</td>
+                    <td class="amount">{{ txn.amount | number:'1.0-0' }} {{ txn.currency }}</td>
+                    <td>
+                        <span class="badge status" [class]="txn.status.toLowerCase()">{{ txn.status }}</span>
+                    </td>
+                    <td class="mono">{{ getLatency(txn) }}</td>
+                    <td>{{ formatTime(txn.createdAt) }}</td>
+                </tr>
+                }
+                @if (filteredTransactions().length === 0) {
+                <tr>
+                    <td colspan="7" class="empty">
+                        <span class="material-icons-outlined">search_off</span>
+                        <br>Aucune transaction trouvée pour ce compte
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+</div>

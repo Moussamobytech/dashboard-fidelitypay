@@ -1,0 +1,151 @@
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="logo">
+                <div class="logo-icon">F</div>
+                <span class="logo-text">Fidelity<span>Pay</span></span>
+            </div>
+            <h1>Créer un compte</h1>
+            <p>Rejoignez l'orchestrateur de paiement nouvelle génération.</p>
+
+            <div class="step-indicator">
+                <div class="step" [class.active]="currentStep() >= 1" [class.completed]="currentStep() > 1">1</div>
+                <div class="line" [class.completed]="currentStep() > 1"></div>
+                <div class="step" [class.active]="currentStep() === 2">2</div>
+            </div>
+        </div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <!-- Step 1: Info Personnelle -->
+            <div class="step-content" *ngIf="currentStep() === 1">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">Prénom</label>
+                        <div class="input-container"
+                            [class.has-error]="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched">
+                            <span class="material-icons-outlined">person</span>
+                            <input type="text" id="firstName" formControlName="firstName" placeholder="Ex: Jean">
+                        </div>
+                        <div class="field-error"
+                            *ngIf="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched">
+                            Prénom requis
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Nom</label>
+                        <div class="input-container"
+                            [class.has-error]="registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched">
+                            <span class="material-icons-outlined">person</span>
+                            <input type="text" id="lastName" formControlName="lastName" placeholder="Ex: Dupont">
+                        </div>
+                        <div class="field-error"
+                            *ngIf="registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched">
+                            Nom requis
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="appName">Nom de l'application (Facultatif)</label>
+                    <div class="input-container">
+                        <span class="material-icons-outlined">apps</span>
+                        <input type="text" id="appName" formControlName="appName"
+                            placeholder="Ex: Ma Boutique En Ligne">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Adresse Email</label>
+                    <div class="input-container"
+                        [class.has-error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+                        <span class="material-icons-outlined">mail</span>
+                        <input type="email" id="email" formControlName="email" placeholder="nom@entreprise.com">
+                    </div>
+                    <div class="field-error"
+                        *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+                        Email valide requis
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mot de Passe</label>
+                    <div class="input-container"
+                        [class.has-error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+                        <span class="material-icons-outlined">lock</span>
+                        <input type="password" id="password" formControlName="password"
+                            placeholder="Minimum 8 caractères">
+                    </div>
+                    <div class="field-error"
+                        *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+                        Minimum 8 caractères requis
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-primary full-width" (click)="nextStep()">
+                    Continuer
+                    <span class="material-icons-outlined">arrow_forward</span>
+                </button>
+            </div>
+
+            <!-- Step 2: Role et Pays -->
+            <div class="step-content" *ngIf="currentStep() === 2">
+                <div class="form-group">
+                    <label>Quel est votre rôle ?</label>
+                    <div class="role-grid">
+                        <div *ngFor="let role of roles" class="role-item"
+                            [class.selected]="registerForm.get('role')?.value === role.value"
+                            (click)="registerForm.get('role')?.setValue(role.value)">
+                            <div class="role-icon">
+                                <span class="material-icons-outlined">{{ role.icon }}</span>
+                            </div>
+                            <div class="role-label">{{ role.label }}</div>
+                        </div>
+                    </div>
+                    <div class="field-error"
+                        *ngIf="registerForm.get('role')?.invalid && registerForm.get('role')?.touched"
+                        style="justify-content: center; margin-top: 0.75rem;">
+                        Veuillez sélectionner un rôle
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="country">Dans quel pays opérez-vous ?</label>
+                    <div class="input-container"
+                        [class.has-error]="registerForm.get('country')?.invalid && registerForm.get('country')?.touched">
+                        <span class="material-icons-outlined">public</span>
+                        <select id="country" formControlName="country">
+                            <option value="">Sélectionnez un pays</option>
+                            <option *ngFor="let country of countries" [value]="country.code">{{ country.name }}</option>
+                        </select>
+                    </div>
+                    <div class="field-error"
+                        *ngIf="registerForm.get('country')?.invalid && registerForm.get('country')?.touched">
+                        Sélectionnez votre pays
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline" (click)="prevStep()">
+                        Retour
+                    </button>
+                    <button type="submit" class="btn btn-primary" [disabled]="!registerForm.valid || isLoading()">
+                        {{ isLoading() ? 'Création...' : 'S\'inscrire' }}
+                    </button>
+                </div>
+            </div>
+
+            <div *ngIf="errorMessage()" class="error-message">
+                {{ errorMessage() }}
+            </div>
+
+            <div *ngIf="registerForm.invalid && registerForm.touched && !errorMessage()" class="error-message"
+                style="background: #fffbeb; color: #b45309;">
+                Veuillez remplir correctement tous les champs obligatoires.
+            </div>
+        </form>
+
+        <div class="auth-footer">
+            Déjà un compte ? <a routerLink="/login">Se connecter</a>
+        </div>
+    </div>
+</div>

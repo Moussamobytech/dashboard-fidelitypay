@@ -1,0 +1,128 @@
+<div class="dashboard-header">
+    <div>
+        <h1>Tableau de Bord</h1>
+        <p class="subtitle">Activité de votre compte développeur Fidelity Pay</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-outline" [routerLink]="'/developer-transactions'">
+            <span class="material-icons-outlined">receipt_long</span>
+            Voir toutes les transactions
+        </button>
+        <button class="btn btn-primary" [routerLink]="'/developers'">
+            <span class="material-icons-outlined">vpn_key</span>
+            Gérer mes clés API
+        </button>
+    </div>
+</div>
+
+<!-- Filtre de période (identique admin) -->
+<div class="period-filter-container">
+    <div class="filter-group">
+        <button class="filter-btn" [class.active]="selectedPeriod() === '24h'" (click)="setPeriod('24h')">Dernières
+            24h</button>
+        <button class="filter-btn" [class.active]="selectedPeriod() === 'week'" (click)="setPeriod('week')">Cette
+            semaine</button>
+        <button class="filter-btn" [class.active]="selectedPeriod() === 'month'" (click)="setPeriod('month')">Ce
+            mois</button>
+    </div>
+</div>
+
+<!-- Stats (identiques au dashboard admin) -->
+<div class="stats-grid">
+    @for (stat of stats(); track stat.label) {
+    <div class="card stat-card">
+        <div class="stat-icon" [class]="stat.icon">
+            <span class="material-icons-outlined">{{ stat.icon }}</span>
+        </div>
+        <div class="stat-content">
+            <p class="stat-label">{{ stat.label }}</p>
+            <h2 class="stat-value">{{ stat.value }}</h2>
+            <p class="stat-change" [class]="stat.trend">
+                <span class="material-icons-outlined" *ngIf="stat.trend === 'up'">trending_up</span>
+                <span class="material-icons-outlined" *ngIf="stat.trend === 'down'">trending_down</span>
+                <span class="material-icons-outlined" *ngIf="stat.trend === 'neutral'">remove</span>
+                {{ stat.change }}
+            </p>
+        </div>
+    </div>
+    }
+</div>
+
+<!-- Tableau transactions récentes (identique admin) -->
+<div class="main-grid">
+    <div class="card transactions-card">
+        <div class="card-header">
+            <div class="title-with-badge">
+                <h3>Mes Transactions Récentes</h3>
+                <span class="live-indicator">
+                    <span class="dot"></span> Direct
+                </span>
+            </div>
+            <a routerLink="/developer-transactions" class="view-all">Tout voir</a>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Pays</th>
+                        <th>Opérateur</th>
+                        <th>Montant</th>
+                        <th>Provider</th>
+                        <th>Santé</th>
+                        <th>Status</th>
+                        <th>Latence</th>
+                        <th>Temps</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (txn of recentTransactions(); track txn.fullId) {
+                    <tr>
+                        <td class="id-cell" [title]="txn.fullId">{{ txn.id }}</td>
+                        <td>{{ txn.countryName || 'N/A' }}</td>
+                        <td>
+                            <div class="operator-cell">
+                                <span class="operator-icon" [attr.data-operator]="txn.operator">
+                                    <span class="material-icons-outlined" style="font-size: 18px;">{{
+                                        getOperatorIcon(txn.operator) }}</span>
+                                </span>
+                                <span class="operator-name">{{ txn.operator }}</span>
+                            </div>
+                        </td>
+                        <td class="amount-cell">{{ txn.amount }}</td>
+                        <td>
+                            <span class="provider-badge">{{ txn.provider }}</span>
+                        </td>
+                        <td>
+                            <span class="health-tag"
+                                [class.health-good]="txn.routeHealth === 'HEALTHY' || txn.routeHealth === 'STABLE'"
+                                [class.health-warn]="txn.routeHealth === 'DEGRADED'"
+                                [class.health-bad]="txn.routeHealth === 'DOWN'">
+                                {{ txn.routeHealth }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="status-cell">
+                                <span class="status-dot" [class.success]="txn.status === 'SUCCESS'"
+                                    [class.failed]="txn.status === 'FAILED'"
+                                    [class.pending]="txn.status === 'PENDING'"></span>
+                                {{ txn.status }}
+                            </div>
+                        </td>
+                        <td class="latency-cell">{{ txn.latency }}</td>
+                        <td class="time-cell">{{ txn.time }}</td>
+                    </tr>
+                    }
+                    @if (recentTransactions().length === 0) {
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <span class="material-icons-outlined">receipt_long</span>
+                            <br>Aucune transaction sur cette période
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

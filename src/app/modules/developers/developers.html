@@ -1,0 +1,184 @@
+<div class="developers-container">
+    <header class="header-section">
+        <div class="title-area">
+            <h1>{{ isAdmin() ? 'Administration des Clés API' : 'Espace Développeur' }}</h1>
+            <p>{{ isAdmin() ? 'Gérez et monitorez l\'ensemble des accès API de la plateforme.' : 'Gérez vos clés API et
+                intégrez les paiements Fidelity Pay en quelques minutes.' }}</p>
+        </div>
+        <div class="actions">
+            <button class="btn-outline" (click)="toggleEnvironment()">
+                {{ currentEnvironment === 'sandbox' ? 'Passer au Live' : 'Passer au Sandbox' }}
+            </button>
+            <button class="btn-primary" (click)="generateNewKey()" *ngIf="!isAdmin()">
+                <i class="fas fa-plus"></i> Générer une nouvelle clé
+            </button>
+        </div>
+    </header>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="label"><i class="fas fa-key"></i> Clés actives</div>
+            <div class="value">{{ activeKeysCount() }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label"><i class="fas fa-bolt"></i> Appels API (24h)</div>
+            <div class="value">{{ apiCallsCount() | number }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label"><i class="fas fa-check-circle"></i> Taux de succès</div>
+            <div class="value">{{ successRate() }}%</div>
+        </div>
+        <div class="stat-card">
+            <div class="label"><i class="fas fa-clock"></i> Latence moyenne</div>
+            <div class="value">{{ avgLatency() }}ms</div>
+        </div>
+    </div>
+
+    <div class="tabs-navigation">
+        <div class="tab-item" [class.active]="currentEnvironment === 'sandbox'" (click)="setEnvironment('sandbox')">
+            Sandbox (Test)</div>
+        <div class="tab-item" [class.active]="currentEnvironment === 'live'" (click)="setEnvironment('live')">Live
+            (Production)</div>
+    </div>
+
+    <section class="keys-section">
+        <div class="section-header">
+            <h2>Clés d'API {{ currentEnvironment === 'sandbox' ? 'Sandbox' : 'Live' }}</h2>
+        </div>
+        <table class="keys-table">
+            <thead>
+                <tr>
+                    <th>{{ isAdmin() ? 'Utilisateur' : 'Label' }}</th>
+                    <th>Clé API</th>
+                    <th>Secret</th>
+                    <th>Statut</th>
+                    <th>Créée</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let key of filteredKeys()">
+                    <td>
+                        <div class="user-info-cell" *ngIf="isAdmin()">
+                            <span class="user-name">{{ key.userFullName }}</span>
+                            <span class="user-email text-xs text-slate-400">{{ key.userEmail }}</span>
+                        </div>
+                        <span class="key-label" *ngIf="!isAdmin()">{{ key.name }}</span>
+                    </td>
+                    <td>
+                        <div class="key-display">
+                            {{ key.publicKey }}
+                            <i class="far fa-copy copy-btn" (click)="copyToClipboard(key.publicKey)"></i>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="key-display">
+                            {{ key.secretKeyMasked }}
+                            <i class="far fa-eye copy-btn" title="Voir le secret"></i>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge" [ngClass]="key.isActive ? 'active' : 'inactive'">
+                            {{ key.isActive ? 'Active' : 'Inactive' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="date-display">{{ key.createdAt | date: 'dd MMM yyyy' }}</span>
+                    </td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="btn-icon" title="Copier la clé publique"
+                                (click)="copyToClipboard(key.publicKey)">
+                                <i class="far fa-copy"></i>
+                            </button>
+                            <button class="btn-icon" title="Voir les détails">
+                                <i class="far fa-eye"></i>
+                            </button>
+                            <!-- Admin Actions -->
+                            <ng-container *ngIf="isAdmin()">
+                                <button class="btn-icon warning" *ngIf="key.isActive" title="Bloquer la clé"
+                                    (click)="revokeKey(key.id)">
+                                    <i class="fas fa-lock"></i>
+                                </button>
+                                <button class="btn-icon success" *ngIf="!key.isActive" title="Activer la clé"
+                                    (click)="activateKey(key.id)">
+                                    <i class="fas fa-lock-open"></i>
+                                </button>
+                                <button class="btn-icon danger" title="Supprimer la clé" (click)="deleteKey(key.id)">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </ng-container>
+                        </div>
+                    </td>
+                </tr>
+                <tr *ngIf="filteredKeys().length === 0">
+                    <td colspan="6" style="text-align: center; padding: 3rem; color: #64748b;">
+                        Aucune clé générée pour cet environnement.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="integration-section">
+        <h2 class="section-title">Intégration ultra-rapide</h2>
+        <div class="integration-grid">
+            <div class="code-card">
+                <div class="code-header">
+                    <span class="lang-badge">Exemple Node.js / TypeScript</span>
+                    <button class="btn-icon" style="background: transparent; border: none; color: #94a3b8;"><i
+                            class="far fa-copy"></i></button>
+                </div>
+                <div class="code-body">
+                    <pre><code>import &#123; FidelityPay &#125; from '@fidelity-pay/sdk';
+
+const fidelity = new FidelityPay('{{ firstKey() }}');
+
+// Initialiser un paiement
+const session = await fidelity.payments.create(&#123;
+  amount: 5000,
+  currency: 'XOF',
+  description: 'Achat iPhone 15 Pro',
+  customer: &#123;
+    email: 'client@example.com',
+    name: 'Jean Dupont'
+  &#125;,
+  callback_url: 'https://votre-site.com/webhook',
+  return_url: 'https://votre-site.com/merci'
+&#125;);
+
+console.log('Lien de paiement:', session.payment_url);</code></pre>
+                </div>
+            </div>
+
+            <div class="guides-card">
+                <h3>Ressources d'intégration</h3>
+
+                <div class="guide-item">
+                    <div class="icon-box"><i class="fas fa-book"></i></div>
+                    <div class="content">
+                        <h4>Documentation API</h4>
+                        <p>Explorez notre documentation complète pour maîtriser toutes les fonctionnalités de l'API
+                            Fidelity Pay.</p>
+                    </div>
+                </div>
+
+                <div class="guide-item">
+                    <div class="icon-box"><i class="fas fa-code"></i></div>
+                    <div class="content">
+                        <h4>SDK & Librairies</h4>
+                        <p>Téléchargez nos kits de développement pour PHP, Python, Java et bien d'autres.</p>
+                    </div>
+                </div>
+
+                <div class="guide-item">
+                    <div class="icon-box"><i class="fas fa-plug"></i></div>
+                    <div class="content">
+                        <h4>Plugins CMS</h4>
+                        <p>Intégrez le paiement sur votre site WooCommerce, PrestaShop ou Shopify sans coder.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

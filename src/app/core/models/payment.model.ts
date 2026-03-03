@@ -27,6 +27,7 @@ export interface Payment {
     failureReason?: string;
     usedFallback?: boolean;
     countryName?: string; // Human readable country name
+    userId?: string;     // ID of the user who owns the payment
 }
 
 export interface PaymentInitiateRequest {
