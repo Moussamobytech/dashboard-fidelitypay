@@ -18,6 +18,11 @@ export class DeveloperTransactionsComponent implements OnInit {
 
     transactions = signal<Payment[]>([]);
     isLoading = signal(true);
+    Math = Math;
+
+    // Pagination
+    currentPage = signal(1);
+    pageSize = signal(10);
 
     // Filters
     period = signal('all');
@@ -72,6 +77,37 @@ export class DeveloperTransactionsComponent implements OnInit {
         return list;
     });
 
+    paginatedTransactions = computed(() => {
+        const startIndex = (this.currentPage() - 1) * this.pageSize();
+        return this.filteredTransactions().slice(startIndex, startIndex + this.pageSize());
+    });
+
+    totalPages = computed(() => {
+        return Math.ceil(this.filteredTransactions().length / this.pageSize()) || 1;
+    });
+
+    pages = computed(() => {
+        return [this.currentPage()];
+    });
+
+    setPage(page: number) {
+        if (page >= 1 && page <= this.totalPages()) {
+            this.currentPage.set(page);
+        }
+    }
+
+    nextPage() {
+        if (this.currentPage() < this.totalPages()) {
+            this.currentPage.set(this.currentPage() + 1);
+        }
+    }
+
+    prevPage() {
+        if (this.currentPage() > 1) {
+            this.currentPage.set(this.currentPage() - 1);
+        }
+    }
+
     ngOnInit() {
         this.loadMyTransactions();
         this.loadCountries();
@@ -79,7 +115,10 @@ export class DeveloperTransactionsComponent implements OnInit {
 
     loadCountries() {
         this.paymentService.getPaymentCountries().subscribe({
-            next: (data) => this.countries.set(data),
+            next: (data) => {
+                const uniqueCountries = [...new Set(data.map(c => this.getCountry(c)))].sort();
+                this.countries.set(uniqueCountries);
+            },
             error: (err) => console.error('Error loading countries:', err)
         });
     }
@@ -96,10 +135,22 @@ export class DeveloperTransactionsComponent implements OnInit {
             next: (data: any[]) => {
                 const flattened = data.map((d: any) => {
                     const payment = d.payment ? d.payment : d;
+
+                    // Robust extraction of route name
+                    let routeName = 'N/A';
+                    if (payment.routeName) routeName = payment.routeName;
+                    else if (d.routeName) routeName = d.routeName;
+                    else if (payment.route) {
+                        routeName = typeof payment.route === 'object' ? payment.route.name : payment.route;
+                    } else if (d.route) {
+                        routeName = typeof d.route === 'object' ? d.route.name : d.route;
+                    }
+
                     return {
                         ...payment,
-                        routeLatency: payment.providerResponseTimeMs || d.routeLatency || payment.latency || 0,
-                        countryName: this.getCountry(payment.country || payment.routeName || '')
+                        routeName: routeName,
+                        routeLatency: payment.providerResponseTimeMs || d.routeLatency || payment.latency || d.latency || 0,
+                        countryName: this.getCountry(payment.country || routeName || '')
                     } as Payment;
                 });
                 this.transactions.set(flattened);
@@ -112,11 +163,11 @@ export class DeveloperTransactionsComponent implements OnInit {
         });
     }
 
-    setPeriod(e: any) { this.period.set(e.target.value); }
-    setProvider(e: any) { this.provider.set(e.target.value); }
-    setOperator(e: any) { this.operator.set(e.target.value); }
-    setStatus(e: any) { this.status.set(e.target.value); }
-    setCountry(e: any) { this.country.set(e.target.value); }
+    setPeriod(e: any) { this.period.set(e.target.value); this.currentPage.set(1); }
+    setProvider(e: any) { this.provider.set(e.target.value); this.currentPage.set(1); }
+    setOperator(e: any) { this.operator.set(e.target.value); this.currentPage.set(1); }
+    setStatus(e: any) { this.status.set(e.target.value); this.currentPage.set(1); }
+    setCountry(e: any) { this.country.set(e.target.value); this.currentPage.set(1); }
 
     getLatency(txn: any): string {
         const l = txn.providerResponseTimeMs ?? txn.latence ?? txn.routeLatency ?? 0;

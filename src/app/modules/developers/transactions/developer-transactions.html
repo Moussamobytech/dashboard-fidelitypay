@@ -59,6 +59,7 @@
                     <th>ID</th>
                     <th>Pays</th>
                     <th>Opérateur</th>
+                    <th>Route</th>
                     <th>Montant</th>
                     <th>Status</th>
                     <th>Latence</th>
@@ -66,11 +67,12 @@
                 </tr>
             </thead>
             <tbody>
-                @for (txn of filteredTransactions(); track txn.paymentId) {
+                @for (txn of paginatedTransactions(); track txn.paymentId) {
                 <tr>
                     <td class="mono">{{ txn.paymentId.substring(0, 8) }}…</td>
                     <td>{{ $any(txn).countryName || 'N/A' }}</td>
                     <td>{{ txn.operator || '-' }}</td>
+                    <td><span class="route-badge">{{ txn.routeName || 'N/A' }}</span></td>
                     <td class="amount">{{ txn.amount | number:'1.0-0' }} {{ txn.currency }}</td>
                     <td>
                         <span class="badge status" [class]="txn.status.toLowerCase()">{{ txn.status }}</span>
@@ -79,9 +81,9 @@
                     <td>{{ formatTime(txn.createdAt) }}</td>
                 </tr>
                 }
-                @if (filteredTransactions().length === 0) {
+                @if (paginatedTransactions().length === 0 && !isLoading()) {
                 <tr>
-                    <td colspan="7" class="empty">
+                    <td colspan="8" class="empty">
                         <span class="material-icons-outlined">search_off</span>
                         <br>Aucune transaction trouvée pour ce compte
                     </td>
@@ -89,6 +91,32 @@
                 }
             </tbody>
         </table>
+    </div>
+
+    <!-- Pagination System -->
+    <div class="pagination-container" *ngIf="filteredTransactions().length > 0">
+        <div class="pagination-info">
+            Affichage de <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> à
+            <strong>{{ Math.min(currentPage() * pageSize(), filteredTransactions().length) }}</strong> sur
+            <strong>{{ filteredTransactions().length }}</strong>
+        </div>
+        <div class="pagination-controls">
+            <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">
+                <span class="material-icons-outlined">chevron_left</span>
+            </button>
+
+            <div class="page-numbers">
+                @for (p of pages(); track p) {
+                <button class="btn-pagination" [class.active]="currentPage() === p" (click)="setPage(p)">
+                    {{ p }}
+                </button>
+                }
+            </div>
+
+            <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+                <span class="material-icons-outlined">chevron_right</span>
+            </button>
+        </div>
     </div>
     }
 </div>

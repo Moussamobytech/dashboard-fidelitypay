@@ -69,6 +69,7 @@
                         <th>Opérateur</th>
                         <th>Montant</th>
                         <th>Provider</th>
+                        <th>Route</th>
                         <th>Santé</th>
                         <th>Status</th>
                         <th>Latence</th>
@@ -76,7 +77,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (txn of recentTransactions(); track txn.fullId) {
+                    @for (txn of paginatedTransactions(); track txn.fullId) {
                     <tr>
                         <td class="id-cell" [title]="txn.fullId">{{ txn.id }}</td>
                         <td>{{ txn.countryName || 'N/A' }}</td>
@@ -92,6 +93,9 @@
                         <td class="amount-cell">{{ txn.amount }}</td>
                         <td>
                             <span class="provider-badge">{{ txn.provider }}</span>
+                        </td>
+                        <td>
+                            <span class="route-badge">{{ txn.route }}</span>
                         </td>
                         <td>
                             <span class="health-tag"
@@ -113,9 +117,9 @@
                         <td class="time-cell">{{ txn.time }}</td>
                     </tr>
                     }
-                    @if (recentTransactions().length === 0) {
+                    @if (paginatedTransactions().length === 0) {
                     <tr>
-                        <td colspan="9" class="empty-state">
+                        <td colspan="10" class="empty-state">
                             <span class="material-icons-outlined">receipt_long</span>
                             <br>Aucune transaction sur cette période
                         </td>
@@ -123,6 +127,32 @@
                     }
                 </tbody>
             </table>
+
+            <!-- Pagination System -->
+            <div class="pagination-container" *ngIf="recentTransactions().length > 0">
+                <div class="pagination-info">
+                    Affichage de <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> à
+                    <strong>{{ Math.min(currentPage() * pageSize(), recentTransactions().length) }}</strong> sur
+                    <strong>{{ recentTransactions().length }}</strong>
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">
+                        <span class="material-icons-outlined">chevron_left</span>
+                    </button>
+
+                    <div class="page-numbers">
+                        @for (p of pages(); track p) {
+                        <button class="btn-pagination" [class.active]="currentPage() === p" (click)="setPage(p)">
+                            {{ p }}
+                        </button>
+                        }
+                    </div>
+
+                    <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+                        <span class="material-icons-outlined">chevron_right</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

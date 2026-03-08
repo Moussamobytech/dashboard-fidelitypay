@@ -20,7 +20,43 @@ export class DevelopersComponent implements OnInit {
     currentEnvironment: 'sandbox' | 'live' = 'sandbox';
     allKeys = signal<ApiKey[]>([]);
     filteredKeys = signal<ApiKey[]>([]);
-    firstKey = computed(() => this.filteredKeys().length > 0 ? this.filteredKeys()[0].publicKey : 'VOTRE_CLE_API');
+    Math = Math;
+
+    // Pagination
+    currentPage = signal(1);
+    pageSize = signal(10);
+    firstKey = computed(() => this.paginatedKeys().length > 0 ? this.paginatedKeys()[0].publicKey : 'VOTRE_CLE_API');
+
+    paginatedKeys = computed(() => {
+        const startIndex = (this.currentPage() - 1) * this.pageSize();
+        return this.filteredKeys().slice(startIndex, startIndex + this.pageSize());
+    });
+
+    totalPages = computed(() => {
+        return Math.ceil(this.filteredKeys().length / this.pageSize()) || 1;
+    });
+
+    pages = computed(() => {
+        return [this.currentPage()];
+    });
+
+    setPage(page: number) {
+        if (page >= 1 && page <= this.totalPages()) {
+            this.currentPage.set(page);
+        }
+    }
+
+    nextPage() {
+        if (this.currentPage() < this.totalPages()) {
+            this.currentPage.set(this.currentPage() + 1);
+        }
+    }
+
+    prevPage() {
+        if (this.currentPage() > 1) {
+            this.currentPage.set(this.currentPage() - 1);
+        }
+    }
 
     // Stats as signals for reactivity
     activeKeysCount = signal(0);
@@ -78,6 +114,7 @@ export class DevelopersComponent implements OnInit {
 
     filterKeys(): void {
         this.filteredKeys.set(this.allKeys().filter(k => k.environment === this.currentEnvironment));
+        this.currentPage.set(1);
     }
 
     generateNewKey(): void {

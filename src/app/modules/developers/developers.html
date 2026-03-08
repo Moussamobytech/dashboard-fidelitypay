@@ -57,7 +57,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let key of filteredKeys()">
+                <tr *ngFor="let key of paginatedKeys()">
                     <td>
                         <div class="user-info-cell" *ngIf="isAdmin()">
                             <span class="user-name">{{ key.userFullName }}</span>
@@ -111,13 +111,39 @@
                         </div>
                     </td>
                 </tr>
-                <tr *ngIf="filteredKeys().length === 0">
+                <tr *ngIf="paginatedKeys().length === 0">
                     <td colspan="6" style="text-align: center; padding: 3rem; color: #64748b;">
                         Aucune clé générée pour cet environnement.
                     </td>
                 </tr>
             </tbody>
         </table>
+
+        <!-- Pagination System -->
+        <div class="pagination-container" *ngIf="filteredKeys().length > 0">
+            <div class="pagination-info">
+                Affichage de <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> à
+                <strong>{{ Math.min(currentPage() * pageSize(), filteredKeys().length) }}</strong> sur
+                <strong>{{ filteredKeys().length }}</strong> clés
+            </div>
+            <div class="pagination-controls">
+                <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">
+                    <span class="material-icons-outlined">chevron_left</span>
+                </button>
+
+                <div class="page-numbers">
+                    @for (p of pages(); track p) {
+                    <button class="btn-pagination" [class.active]="currentPage() === p" (click)="setPage(p)">
+                        {{ p }}
+                    </button>
+                    }
+                </div>
+
+                <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+                    <span class="material-icons-outlined">chevron_right</span>
+                </button>
+            </div>
+        </div>
     </section>
 
     <section class="integration-section">

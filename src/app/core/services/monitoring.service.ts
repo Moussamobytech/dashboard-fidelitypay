@@ -11,20 +11,10 @@ export class MonitoringService {
     private http = inject(HttpClient);
     private apiUrl = '/api/monitoring';
 
-    /**
-     * Récupérer les routes
-     * GET /api/monitoring/routes
-     */
     getRoutes(): Observable<Route[]> {
         return this.http.get<Route[]>(`${this.apiUrl}/routes`);
     }
-    /**
-       * Liste des pays ayant des transactions
-       * GET /api/payments/countries
-       */
-    getPaymentCountries(): Observable<string[]> {
-        return this.http.get<string[]>(`${this.apiUrl}/payments/countries`);
-    }
+
     /**
      * Déclencher un check manuel
      * POST /api/monitoring/check

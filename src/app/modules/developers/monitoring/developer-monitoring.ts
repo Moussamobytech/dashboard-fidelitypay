@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MonitoringService } from '../../../core/services/monitoring.service';
 import { PaymentService } from '../../../core/services/payment.service';
@@ -14,9 +14,15 @@ import { ChartData, ChartOptions } from 'chart.js';
     templateUrl: './developer-monitoring.html',
     styleUrls: ['./developer-monitoring.scss']
 })
-export class DeveloperMonitoringComponent implements OnInit {
+export class DeveloperMonitoringComponent implements OnInit, OnDestroy {
     private monitoringService = inject(MonitoringService);
     private paymentService = inject(PaymentService);
+    private refreshInterval: any;
+    Math = Math;
+
+    // Pagination
+    currentPage = signal(1);
+    pageSize = signal(10);
 
     // Data Signals
     routes = signal<Route[]>([]);
@@ -79,24 +85,8 @@ export class DeveloperMonitoringComponent implements OnInit {
         }
 
 
-        // 4. Period Filter
-        if (this.selectedPeriod()) {
-            const now = new Date().getTime();
-            const p = this.selectedPeriod();
-            let startTime = 0;
-
-            if (p === '24h') startTime = now - 24 * 3600 * 1000;
-            else if (p === 'week') startTime = now - 7 * 24 * 3600 * 1000;
-            else if (p === 'month') startTime = now - 30 * 24 * 3600 * 1000;
-            else if (p === 'year') startTime = now - 365 * 24 * 3600 * 1000;
-
-            if (startTime > 0) {
-                list = list.filter(r => {
-                    if (!r.updatedAt) return true;
-                    return new Date(r.updatedAt).getTime() >= startTime;
-                });
-            }
-        }
+        // Note: Le Period Filter a été retiré de la liste des routes car une route est une configuration
+        // persistante et ne doit pas disparaître si elle n'a pas été modifiée récemment.
 
         return list;
     });
@@ -118,15 +108,65 @@ export class DeveloperMonitoringComponent implements OnInit {
         }
     };
 
+    paginatedRoutes = computed(() => {
+        const startIndex = (this.currentPage() - 1) * this.pageSize();
+        return this.filteredRoutes().slice(startIndex, startIndex + this.pageSize());
+    });
+
+    totalPages = computed(() => {
+        return Math.ceil(this.filteredRoutes().length / this.pageSize()) || 1;
+    });
+
+    pages = computed(() => {
+        return [this.currentPage()];
+    });
+
+    setPage(page: number) {
+        if (page >= 1 && page <= this.totalPages()) {
+            this.currentPage.set(page);
+        }
+    }
+
+    nextPage() {
+        if (this.currentPage() < this.totalPages()) {
+            this.currentPage.set(this.currentPage() + 1);
+        }
+    }
+
+    prevPage() {
+        if (this.currentPage() > 1) {
+            this.currentPage.set(this.currentPage() - 1);
+        }
+    }
+
     ngOnInit() {
         this.loadRoutes();
         this.loadFailures();
         this.loadCountries();
+
+        // Rafraîchir les textes de "Mise à jour" toutes les 10 secondes
+        this.refreshInterval = setInterval(() => {
+            this.updateTimes();
+        }, 10000);
+    }
+
+    ngOnDestroy() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+        }
+    }
+
+    updateTimes() {
+        // Force Angular à recalculer les fonctions dans le template
+        this.routes.update(r => [...r]);
     }
 
     loadCountries() {
         this.paymentService.getPaymentCountries().subscribe({
-            next: (data) => this.countries.set(data),
+            next: (data) => {
+                const uniqueCountries = [...new Set(data.map(c => this.getCountry(c)))].sort();
+                this.countries.set(uniqueCountries);
+            },
             error: (err) => console.error('Error loading countries:', err)
         });
     }
@@ -140,6 +180,7 @@ export class DeveloperMonitoringComponent implements OnInit {
                     countryName: this.getCountry(route.country || route.countryName || null)
                 }));
                 this.routes.set(enrichedRoutes);
+                this.updateTimes();
                 // After loading routes, load failures to potentially further enrich country info
                 this.loadFailures();
             },
@@ -218,13 +259,21 @@ export class DeveloperMonitoringComponent implements OnInit {
                 }
 
                 const enriched = currentRoutes.map(route => {
-                    // On cherche un paiement qui a utilisé cette route pour inférer le pays si manquant
-                    const sample = normalized.find(p =>
-                        p.extractedRouteName === route.name ||
-                        (p.provider === route.provider && p.operator === route.operator)
-                    );
+                    // 1. Recherche d'un paiement correspondant exactement au nom de la route
+                    let sample = normalized.find(p => p.extractedRouteName === route.name);
 
-                    const countrySource = sample?.extractedCountry || route.country || route.countryName || null;
+                    // 2. Si pas de correspondance exacte, on cherche par provider/opérateur 
+                    // mais UNIQUEMENT si le pays correspond ou si la route n'a pas de pays
+                    if (!sample) {
+                        sample = normalized.find(p =>
+                            p.provider === route.provider &&
+                            p.operator === route.operator &&
+                            (!route.country || p.extractedCountry === route.country)
+                        );
+                    }
+
+                    // On préserve le pays de la route s'il existe, sinon on prend celui du paiement
+                    const countrySource = route.country || route.countryName || sample?.extractedCountry || null;
 
                     const routeStats = statsByRoute.get(route.name || '') || null;
                     const fallbackRate = routeStats && routeStats.total > 0 ? (routeStats.fallback / routeStats.total) : undefined;
@@ -404,6 +453,13 @@ export class DeveloperMonitoringComponent implements OnInit {
 
     getLastUpdate(route: Route): string {
         if (!route.updatedAt) return 'À l\'instant';
+        const updated = new Date(route.updatedAt).getTime();
+        const now = new Date().getTime();
+        const diff = Math.floor((now - updated) / 1000);
+
+        if (diff < 5) return 'À l\'instant';
+        if (diff < 60) return `Il y a ${diff}s`;
+        if (diff < 3600) return `Il y a ${Math.floor(diff / 60)}m`;
         return new Date(route.updatedAt).toLocaleTimeString();
     }
 

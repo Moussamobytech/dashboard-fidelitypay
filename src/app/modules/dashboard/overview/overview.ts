@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MonitoringService } from '../../../core/services/monitoring.service';
 import { PaymentService } from '../../../core/services/payment.service';
@@ -25,6 +25,11 @@ export class DashboardOverviewComponent implements OnInit {
 
     recentTransactions = signal<any[]>([]);
     routesStatus = signal<any[]>([]);
+    Math = Math;
+
+    // Pagination
+    currentPage = signal(1);
+    pageSize = signal(10);
 
     // Store all loaded payments to filter them locally
     private allPayments: Payment[] = [];
@@ -37,6 +42,7 @@ export class DashboardOverviewComponent implements OnInit {
 
     setPeriod(period: '24h' | 'week' | 'month') {
         this.selectedPeriod.set(period);
+        this.currentPage.set(1);
         this.calculateStats();
     }
 
@@ -91,11 +97,8 @@ export class DashboardOverviewComponent implements OnInit {
     }
 
     private updateRecentTransactionsList() {
-        // Always show the most recent transactions regardless of filter for the table, 
-        // or should the table also be filtered? The request says "1 champs filtre associé aux cartes".
-        // Usually, the table below might generic, but let's keep the table showing top 20 recent ones.
-
-        const mappedTxns = this.allPayments.slice(0, 20).map((data: any) => {
+        // Map all payments for the dashboard table (we limit by pagination instead of .slice(0, 20))
+        const mappedTxns = this.allPayments.map((data: any) => {
             const rawLatency = data.providerResponseTimeMs;
             const displayLatency = (rawLatency !== undefined && rawLatency !== null && rawLatency !== 0) ?
                 `${(rawLatency / 1000).toFixed(2)}s` : '-';
@@ -116,6 +119,37 @@ export class DashboardOverviewComponent implements OnInit {
         });
 
         this.recentTransactions.set(mappedTxns);
+    }
+
+    paginatedTransactions = computed(() => {
+        const startIndex = (this.currentPage() - 1) * this.pageSize();
+        return this.recentTransactions().slice(startIndex, startIndex + this.pageSize());
+    });
+
+    totalPages = computed(() => {
+        return Math.ceil(this.recentTransactions().length / this.pageSize()) || 1;
+    });
+
+    pages = computed(() => {
+        return [this.currentPage()];
+    });
+
+    setPage(page: number) {
+        if (page >= 1 && page <= this.totalPages()) {
+            this.currentPage.set(page);
+        }
+    }
+
+    nextPage() {
+        if (this.currentPage() < this.totalPages()) {
+            this.currentPage.set(this.currentPage() + 1);
+        }
+    }
+
+    prevPage() {
+        if (this.currentPage() > 1) {
+            this.currentPage.set(this.currentPage() - 1);
+        }
     }
 
     calculateStats() {

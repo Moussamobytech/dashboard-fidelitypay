@@ -24,7 +24,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (rule of routingRules; track rule.operator) {
+                    @for (rule of paginatedRules(); track rule.operator) {
                     <tr>
                         <td>{{ rule.country }}</td>
                         <td><strong>{{ rule.operator }}</strong></td>
@@ -41,6 +41,32 @@
                     }
                 </tbody>
             </table>
+
+            <!-- Pagination System -->
+            <div class="pagination-container" *ngIf="routingRules().length > 0">
+                <div class="pagination-info">
+                    Affichage de <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> à
+                    <strong>{{ Math.min(currentPage() * pageSize(), routingRules().length) }}</strong> sur
+                    <strong>{{ routingRules().length }}</strong> règles
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">
+                        <span class="material-icons-outlined">chevron_left</span>
+                    </button>
+
+                    <div class="page-numbers">
+                        @for (p of pages(); track p) {
+                        <button class="btn-pagination" [class.active]="currentPage() === p" (click)="setPage(p)">
+                            {{ p }}
+                        </button>
+                        }
+                    </div>
+
+                    <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+                        <span class="material-icons-outlined">chevron_right</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

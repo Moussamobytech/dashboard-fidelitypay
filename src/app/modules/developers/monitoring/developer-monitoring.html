@@ -92,14 +92,7 @@
                 }
             </div>
             <div class="table-filters">
-                <div class="filter-field">
-                    <select (change)="setPeriod($event)">
-                        <option value="24h">Aujourd'hui</option>
-                        <option value="week">Cette semaine</option>
-                        <option value="month">Ce mois</option>
-                        <option value="year">Cette année</option>
-                    </select>
-                </div>
+                <!-- Period Filter retiré car inadapté aux routes persistantes -->
                 <div class="filter-field">
                     <select (change)="setProviderFilter($event)">
                         <option value="">Tous les providers</option>
@@ -137,7 +130,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (route of filteredRoutes(); track route.id) {
+                    @for (route of paginatedRoutes(); track route.id) {
                     <tr>
                         <td>{{ $any(route).countryName || 'N/A' }}</td>
                         <td>
@@ -180,13 +173,39 @@
                         </td>
                     </tr>
                     }
-                    @if (filteredRoutes().length === 0) {
+                    @if (paginatedRoutes().length === 0) {
                     <tr>
                         <td colspan="11" class="empty-state">Aucune route trouvée</td>
                     </tr>
                     }
                 </tbody>
             </table>
+
+            <!-- Pagination System -->
+            <div class="pagination-container" *ngIf="filteredRoutes().length > 0">
+                <div class="pagination-info">
+                    Affichage de <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> à
+                    <strong>{{ Math.min(currentPage() * pageSize(), filteredRoutes().length) }}</strong> sur
+                    <strong>{{ filteredRoutes().length }}</strong> routes
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">
+                        <span class="material-icons-outlined">chevron_left</span>
+                    </button>
+
+                    <div class="page-numbers">
+                        @for (p of pages(); track p) {
+                        <button class="btn-pagination" [class.active]="currentPage() === p" (click)="setPage(p)">
+                            {{ p }}
+                        </button>
+                        }
+                    </div>
+
+                    <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+                        <span class="material-icons-outlined">chevron_right</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

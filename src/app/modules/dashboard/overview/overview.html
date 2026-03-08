@@ -74,7 +74,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (txn of recentTransactions(); track txn.fullId) {
+                    @for (txn of paginatedTransactions(); track txn.fullId) {
                     <tr>
                         <td class="id-cell" [title]="txn.fullId">{{ txn.id }}</td>
                         <td>{{ txn.countryName || 'N/A' }}</td>
@@ -114,13 +114,39 @@
                         <td class="time-cell">{{ txn.time }}</td>
                     </tr>
                     }
-                    @if (recentTransactions().length === 0) {
+                    @if (paginatedTransactions().length === 0) {
                     <tr>
-                        <td colspan="9" class="empty-state">Aucune transaction trouvée</td>
+                        <td colspan="10" class="empty-state">Aucune transaction trouvée</td>
                     </tr>
                     }
                 </tbody>
             </table>
+
+            <!-- Pagination System -->
+            <div class="pagination-container" *ngIf="recentTransactions().length > 0">
+                <div class="pagination-info">
+                    Affichage de <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> à
+                    <strong>{{ Math.min(currentPage() * pageSize(), recentTransactions().length) }}</strong> sur
+                    <strong>{{ recentTransactions().length }}</strong>
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">
+                        <span class="material-icons-outlined">chevron_left</span>
+                    </button>
+
+                    <div class="page-numbers">
+                        @for (p of pages(); track p) {
+                        <button class="btn-pagination" [class.active]="currentPage() === p" (click)="setPage(p)">
+                            {{ p }}
+                        </button>
+                        }
+                    </div>
+
+                    <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+                        <span class="material-icons-outlined">chevron_right</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

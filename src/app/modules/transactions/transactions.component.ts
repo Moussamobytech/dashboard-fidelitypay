@@ -72,6 +72,7 @@ import { FormsModule } from '@angular/forms';
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>Application</th>
                         <th>Pays</th>
                         <th>Opérateur</th>
                         <th>Provider</th>
@@ -83,9 +84,10 @@ import { FormsModule } from '@angular/forms';
                     </tr>
                 </thead>
                 <tbody>
-                    @for (txn of filteredTransactions(); track txn.paymentId) {
+                    @for (txn of paginatedTransactions(); track txn.paymentId || $index) {
                     <tr>
-                        <td class="mono">{{ txn.paymentId.substring(0, 8) }}</td>
+                        <td class="mono" [title]="txn.paymentId || $any(txn).id || 'N/A'">{{ txn.paymentId ? txn.paymentId.substring(0, 8) : ($any(txn).id || 'N/A') }}</td>
+                        <td style="font-weight: 500;">{{ txn.appName || 'N/A' }}</td>
                         <td>{{ $any(txn).countryName || 'N/A' }}</td>
                         <td>{{ txn.operator }}</td>
                         <td>
@@ -94,17 +96,42 @@ import { FormsModule } from '@angular/forms';
                         <td>{{ txn.routeName || 'N/A' }}</td>
                         <td class="amount">{{ txn.amount }} {{ txn.currency }}</td>
                         <td>
-                            <span class="badge status" [class]="txn.status.toLowerCase()">{{ txn.status }}</span>
+                            <span class="badge status" [class]="txn.status ? txn.status.toLowerCase() : ''">{{ txn.status }}</span>
                         </td>
                         <td class="mono">{{ getLatency(txn) }}</td>
                         <td>{{ formatTime(txn.createdAt) }}</td>
                     </tr>
                     }
-                    @if (filteredTransactions().length === 0) {
-                        <tr><td colspan="9" class="empty">Aucune transaction trouvée</td></tr>
+                    @if (paginatedTransactions().length === 0) {
+                        <tr><td colspan="10" class="empty">Aucune transaction trouvée</td></tr>
                     }
                 </tbody>
             </table>
+        </div>
+        <!-- Pagination System -->
+        <div class="pagination-container" *ngIf="filteredTransactions().length > 0">
+            <div class="pagination-info">
+                Affichage de <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> à
+                <strong>{{ Math.min(currentPage() * pageSize(), filteredTransactions().length) }}</strong> sur
+                <strong>{{ filteredTransactions().length }}</strong>
+            </div>
+            <div class="pagination-controls">
+                <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">
+                    <span class="material-icons-outlined">chevron_left</span>
+                </button>
+                
+                <div class="page-numbers">
+                    @for (p of pages(); track p) {
+                    <button class="btn-pagination" [class.active]="currentPage() === p" (click)="setPage(p)">
+                        {{ p }}
+                    </button>
+                    }
+                </div>
+
+                <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+                    <span class="material-icons-outlined">chevron_right</span>
+                </button>
+            </div>
         </div>
     </div>
     `,
@@ -112,8 +139,13 @@ import { FormsModule } from '@angular/forms';
 })
 export class TransactionsComponent implements OnInit {
     private paymentService = inject(PaymentService);
+    Math = Math;
 
     transactions = signal<Payment[]>([]);
+
+    // Pagination
+    currentPage = signal(1);
+    pageSize = signal(10);
 
     // Filters
     period = signal('24h');
@@ -169,6 +201,37 @@ export class TransactionsComponent implements OnInit {
         return list;
     });
 
+    paginatedTransactions = computed(() => {
+        const startIndex = (this.currentPage() - 1) * this.pageSize();
+        return this.filteredTransactions().slice(startIndex, startIndex + this.pageSize());
+    });
+
+    totalPages = computed(() => {
+        return Math.ceil(this.filteredTransactions().length / this.pageSize()) || 1;
+    });
+
+    pages = computed(() => {
+        return [this.currentPage()];
+    });
+
+    setPage(page: number) {
+        if (page >= 1 && page <= this.totalPages()) {
+            this.currentPage.set(page);
+        }
+    }
+
+    nextPage() {
+        if (this.currentPage() < this.totalPages()) {
+            this.currentPage.set(this.currentPage() + 1);
+        }
+    }
+
+    prevPage() {
+        if (this.currentPage() > 1) {
+            this.currentPage.set(this.currentPage() - 1);
+        }
+    }
+
     ngOnInit() {
         this.loadTransactions();
         this.loadCountries();
@@ -177,7 +240,10 @@ export class TransactionsComponent implements OnInit {
 
     loadCountries() {
         this.paymentService.getPaymentCountries().subscribe({
-            next: (data) => this.countries.set(data),
+            next: (data) => {
+                const uniqueCountries = [...new Set(data.map(c => this.getCountry(c)))].sort();
+                this.countries.set(uniqueCountries);
+            },
             error: (err) => console.error('Error loading countries:', err)
         });
     }
@@ -212,12 +278,12 @@ export class TransactionsComponent implements OnInit {
         });
     }
 
-    setPeriod(e: any) { this.period.set(e.target.value); }
-    setProvider(e: any) { this.provider.set(e.target.value); }
-    setOperator(e: any) { this.operator.set(e.target.value); }
-    setStatus(e: any) { this.status.set(e.target.value); }
+    setPeriod(e: any) { this.period.set(e.target.value); this.currentPage.set(1); }
+    setProvider(e: any) { this.provider.set(e.target.value); this.currentPage.set(1); }
+    setOperator(e: any) { this.operator.set(e.target.value); this.currentPage.set(1); }
+    setStatus(e: any) { this.status.set(e.target.value); this.currentPage.set(1); }
 
-    setCountry(e: any) { const v = e.target.value; this.country.set(v); }
+    setCountry(e: any) { const v = e.target.value; this.country.set(v); this.currentPage.set(1); }
 
     getLatency(txn: any): string {
         const l = txn.providerResponseTimeMs ?? txn.latence ?? txn.routeLatency ?? 0;

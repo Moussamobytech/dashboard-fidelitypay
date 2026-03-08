@@ -22,26 +22,25 @@ export class DeveloperDashboardComponent implements OnInit {
     stats = signal([
         { label: 'Volume traité', value: '0 FCFA', change: 'Mon compte', icon: 'payments', trend: 'neutral' },
         { label: 'Taux de succès', value: '0%', change: 'Mon compte', icon: 'check_circle', trend: 'neutral' },
-        { label: 'Clés API actives', value: '0', change: 'Mon compte', icon: 'vpn_key', trend: 'neutral' },
+        { label: 'Utilisation Fallback', value: '0', change: 'Sauvetages', icon: 'alt_route', trend: 'neutral' },
         { label: 'Latence moyenne', value: '--', change: 'Mon compte', icon: 'speed', trend: 'neutral' },
     ]);
 
     recentTransactions = signal<any[]>([]);
     selectedPeriod = signal<'24h' | 'week' | 'month'>('24h');
     myKeys = signal<ApiKey[]>([]);
+    Math = Math;
+
+    // Pagination
+    currentPage = signal(1);
+    pageSize = signal(10);
 
     private allPayments: Payment[] = [];
 
     ngOnInit() {
         this.developerService.getKeys().subscribe(keys => {
             this.myKeys.set(keys);
-            // Mettre à jour la stat des clés actives
-            const activeCount = keys.filter(k => k.isActive).length;
-            this.stats.update(current => {
-                const next = [...current];
-                next[2] = { ...next[2], value: String(activeCount), trend: activeCount > 0 ? 'up' : 'neutral' };
-                return next;
-            });
+            // On ne met plus à jour la stat[2] ici car elle affiche le fallback maintenant
         });
 
         this.loadMyPayments();
@@ -49,6 +48,7 @@ export class DeveloperDashboardComponent implements OnInit {
 
     setPeriod(period: '24h' | 'week' | 'month') {
         this.selectedPeriod.set(period);
+        this.currentPage.set(1);
         this.calculateStats();
         this.updateRecentTransactionsList();
     }
@@ -61,10 +61,20 @@ export class DeveloperDashboardComponent implements OnInit {
             next: (payments: any[]) => {
                 this.allPayments = payments.map((p: any) => {
                     const data = p.payment ? p.payment : p;
+                    // Robust extraction of route name
+                    let routeName = 'N/A';
+                    if (data.routeName) routeName = data.routeName;
+                    else if (p.routeName) routeName = p.routeName;
+                    else if (data.route) {
+                        routeName = typeof data.route === 'object' ? data.route.name : data.route;
+                    } else if (p.route) {
+                        routeName = typeof p.route === 'object' ? p.route.name : p.route;
+                    }
+
                     return {
                         ...data,
                         createdAt: data.createdAt || new Date().toISOString(),
-                        routeName: data.routeName || p.routeName || 'N/A',
+                        routeName: routeName,
                         providerResponseTimeMs: data.latence ?? data.providerResponseTimeMs ?? p.routeLatency ?? 0
                     };
                 });
@@ -88,7 +98,7 @@ export class DeveloperDashboardComponent implements OnInit {
             ? this.allPayments.filter(p => new Date(p.createdAt || 0).getTime() >= startTime)
             : this.allPayments;
 
-        const mapped = filtered.slice(0, 20).map((data: any) => {
+        const mapped = filtered.map((data: any) => {
             const rawLatency = data.providerResponseTimeMs;
             const displayLatency = rawLatency > 0 ? `${(rawLatency / 1000).toFixed(2)}s` : '-';
             return {
@@ -100,12 +110,44 @@ export class DeveloperDashboardComponent implements OnInit {
                 status: data.status || 'PENDING',
                 time: this.formatTime(data.createdAt),
                 provider: data.provider || 'UNKNOWN',
+                route: data.routeName || 'N/A',
                 routeHealth: data.sante || data.routeHealth || 'STABLE',
                 latency: displayLatency
             };
         });
 
         this.recentTransactions.set(mapped);
+    }
+
+    paginatedTransactions = computed(() => {
+        const startIndex = (this.currentPage() - 1) * this.pageSize();
+        return this.recentTransactions().slice(startIndex, startIndex + this.pageSize());
+    });
+
+    totalPages = computed(() => {
+        return Math.ceil(this.recentTransactions().length / this.pageSize()) || 1;
+    });
+
+    pages = computed(() => {
+        return [this.currentPage()];
+    });
+
+    setPage(page: number) {
+        if (page >= 1 && page <= this.totalPages()) {
+            this.currentPage.set(page);
+        }
+    }
+
+    nextPage() {
+        if (this.currentPage() < this.totalPages()) {
+            this.currentPage.set(this.currentPage() + 1);
+        }
+    }
+
+    prevPage() {
+        if (this.currentPage() > 1) {
+            this.currentPage.set(this.currentPage() - 1);
+        }
     }
 
     calculateStats(): void {
@@ -136,13 +178,13 @@ export class DeveloperDashboardComponent implements OnInit {
         const avgLatency = latencies.length > 0
             ? latencies.reduce((a, b) => a + b, 0) / latencies.length : 0;
 
-        const activeKeys = this.myKeys().filter(k => k.isActive).length;
+        const fallbackCount = filtered.filter(p => p.usedFallback).length;
 
         this.stats.update(current => {
             const next = [...current];
             next[0] = { ...next[0], value: `${totalVolume.toLocaleString()} F`, trend: totalVolume > 0 ? 'up' : 'neutral' };
             next[1] = { ...next[1], value: `${successRate.toFixed(1)}%`, trend: successRate > 90 ? 'up' : successRate > 0 ? 'down' : 'neutral' };
-            next[2] = { ...next[2], value: String(activeKeys), trend: activeKeys > 0 ? 'up' : 'neutral' };
+            next[2] = { ...next[2], value: String(fallbackCount), trend: fallbackCount > 0 ? 'up' : 'neutral' };
             next[3] = { ...next[3], value: avgLatency > 0 ? `${(avgLatency / 1000).toFixed(2)}s` : '--', trend: avgLatency > 0 && avgLatency < 500 ? 'up' : 'neutral' };
             return next;
         });

@@ -28,6 +28,7 @@ export interface Payment {
     usedFallback?: boolean;
     countryName?: string; // Human readable country name
     userId?: string;     // ID of the user who owns the payment
+    appName?: string;    // Nom de l'application qui a initié le paiement
 }
 
 export interface PaymentInitiateRequest {
