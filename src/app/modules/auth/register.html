@@ -113,14 +113,11 @@
                     <div class="input-container"
                         [class.has-error]="registerForm.get('country')?.invalid && registerForm.get('country')?.touched">
                         <span class="material-icons-outlined">public</span>
-                        <select id="country" formControlName="country">
-                            <option value="">Sélectionnez un pays</option>
-                            <option *ngFor="let country of countries" [value]="country.code">{{ country.name }}</option>
-                        </select>
+                        <input type="text" id="country" formControlName="country" placeholder="Ex: Sénégal, Mali...">
                     </div>
                     <div class="field-error"
                         *ngIf="registerForm.get('country')?.invalid && registerForm.get('country')?.touched">
-                        Sélectionnez votre pays
+                        Veuillez renseigner votre pays
                     </div>
                 </div>
 

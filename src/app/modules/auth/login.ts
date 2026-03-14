@@ -18,6 +18,11 @@ export class LoginComponent {
 
     isLoading = signal(false);
     errorMessage = signal<string | null>(null);
+    showPassword = signal(false);
+
+    togglePasswordVisibility() {
+        this.showPassword.update(v => !v);
+    }
 
     loginForm = this.fb.group({
         email: ['', [Validators.required, Validators.email]],

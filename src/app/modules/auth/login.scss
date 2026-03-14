@@ -5,3 +5,20 @@
     color: var(--primary);
     font-weight: 600;
 }
+
+.toggle-password {
+    position: absolute;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+
+    &:hover {
+        color: var(--primary);
+    }
+}

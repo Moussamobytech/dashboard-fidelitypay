@@ -35,7 +35,14 @@ export class MonitoringService {
      * Activer/Désactiver une route
      */
     toggleRoute(routeId: number, status: boolean): Observable<Route> {
-        return this.http.patch<Route>(`${this.apiUrl}/routes/${routeId}/toggle`, { status });
+        return this.http.post<Route>(`${this.apiUrl}/routes/toggle`, { id: routeId, enabled: status });
+    }
+
+    /**
+     * Activer/Désactiver les alertes mail pour une route
+     */
+    toggleAlerts(routeId: number, status: boolean): Observable<any> {
+        return this.http.post(`${this.apiUrl}/routes/alerts`, { id: routeId, enabled: status });
     }
 }
 

@@ -62,7 +62,10 @@ export class MonitoringComponent implements OnInit, OnDestroy {
 
     // Derived Lists for Dropdowns
     providers = computed(() => [...new Set(this.routes().map(r => r.provider || 'UNKNOWN'))].sort());
-    countries = signal<string[]>([]);
+    countries = computed(() => {
+        const list = this.routes().map(r => this.getCountry(r.country || (r as any).countryName));
+        return [...new Set(list.filter(c => c !== 'N/A' && c !== 'International'))].sort();
+    });
 
     // Filtered Routes
     filteredRoutes = computed(() => {
@@ -142,7 +145,6 @@ export class MonitoringComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.loadRoutes();
         this.loadFailures();
-        this.loadCountries();
 
         // Rafraîchir les textes de "Mise à jour" toutes les 10 secondes
         this.refreshInterval = setInterval(() => {
@@ -162,16 +164,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
         this.routes.update(r => [...r]);
     }
 
-    loadCountries() {
-        this.paymentService.getPaymentCountries().subscribe({
-            next: (data) => {
-                // Normalisation et dédoublonnage
-                const uniqueCountries = [...new Set(data.map(c => this.getCountry(c)))].sort();
-                this.countries.set(uniqueCountries);
-            },
-            error: (err) => console.error('Error loading countries:', err)
-        });
-    }
+
 
     loadRoutes() {
         this.monitoringService.getRoutes().subscribe({
@@ -179,7 +172,8 @@ export class MonitoringComponent implements OnInit, OnDestroy {
                 const enrichedRoutes = data.map(route => ({
                     ...route,
                     successRate: route.failureRate !== undefined ? `${((1 - route.failureRate) * 100).toFixed(1)}%` : '100%',
-                    countryName: this.getCountry(route.country || route.countryName || null)
+                    countryName: this.getCountry(route.country || route.countryName || null),
+                    alertsEnabled: route.alertsEnabled ?? true
                 }));
                 this.routes.set(enrichedRoutes);
                 this.updateTimes();
@@ -196,7 +190,8 @@ export class MonitoringComponent implements OnInit, OnDestroy {
             const enriched = routes.map(r => ({
                 ...r,
                 successRate: r.failureRate !== undefined ? `${((1 - r.failureRate) * 100).toFixed(1)}%` : '100%',
-                countryName: this.getCountry(r.country || r.countryName || null)
+                countryName: this.getCountry(r.country || r.countryName || null),
+                alertsEnabled: r.alertsEnabled ?? true
             }));
             this.routes.set(enriched);
             this.loadFailures(); // Refresh enrichment from recent payments
@@ -286,7 +281,8 @@ export class MonitoringComponent implements OnInit, OnDestroy {
                         ...route,
                         countryName: this.getCountry(countrySource),
                         // Ne définir fallbackRate que si on a des données issues des paiements
-                        ...(fallbackRate !== undefined ? { fallbackRate } : {})
+                        ...(fallbackRate !== undefined ? { fallbackRate } : {}),
+                        alertsEnabled: route.alertsEnabled ?? true
                     };
                 });
 
@@ -479,6 +475,20 @@ export class MonitoringComponent implements OnInit, OnDestroy {
             error: (err) => {
                 console.error('Erreur lors du toggle route:', err);
                 // Optionnel: afficher une notification d'erreur
+            }
+        });
+    }
+
+    toggleAlertsAction(route: Route) {
+        if (!route.id) return;
+
+        const newStatus = !(route.alertsEnabled ?? true);
+        this.monitoringService.toggleAlerts(route.id, newStatus).subscribe({
+            next: () => {
+                this.routes.update(list => list.map(r => r.id === route.id ? { ...r, alertsEnabled: newStatus } : r));
+            },
+            error: (err) => {
+                console.error('Erreur lors du toggle alertes:', err);
             }
         });
     }

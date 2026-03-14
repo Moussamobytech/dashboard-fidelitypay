@@ -28,4 +28,5 @@ export interface Route {
     updatedAt?: string;
     countryName?: string;
     fallbackRate?: number; // e.g. 0.05 for 5%
+    alertsEnabled?: boolean;
 }

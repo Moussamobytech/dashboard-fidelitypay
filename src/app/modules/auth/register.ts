@@ -39,15 +39,7 @@ export class RegisterComponent {
         { value: 'AUTRE', label: 'Autre', icon: 'person' }
     ];
 
-    countries = [
-        { name: 'Sénégal', code: 'SN' },
-        { name: 'Côte d\'Ivoire', code: 'CI' },
-        { name: 'Mali', code: 'ML' },
-        { name: 'Burkina Faso', code: 'BF' },
-        { name: 'Bénin', code: 'BJ' },
-        { name: 'Togo', code: 'TG' },
-        { name: 'Cameroun', code: 'CM' }
-    ];
+
 
     nextStep() {
         if (this.currentStep() === 1) {

@@ -119,6 +119,7 @@
                         <th>Fallback</th>
                         <th>Latence</th>
                         <th>Status</th>
+                        <!-- <th>Alerte</th> -->
                         <th>Dernier échec</th>
                         <th>Mise à jour</th>
                         <th>Action</th>
@@ -158,6 +159,16 @@
                                 {{ getRouteStatus(route) }}
                             </span>
                         </td>
+                        <!-- <td>
+                            <div class="alert-toggle-cell">
+                                <label class="switch">
+                                    <input type="checkbox" [checked]="route.alertsEnabled !== false"
+                                        (change)="toggleAlertsAction(route)">
+                                    <span class="slider round"></span>
+                                </label>
+                                <span class="alert-label">{{ (route.alertsEnabled !== false) ? 'On' : 'Off' }}</span>
+                            </div>
+                        </td> -->
                         <td class="failure-cell">{{ getLastFailure(route) }}</td>
                         <td class="time-cell">{{ getLastUpdate(route) }}</td>
                         <td>
@@ -170,7 +181,7 @@
                     }
                     @if (paginatedRoutes().length === 0) {
                     <tr>
-                        <td colspan="11" class="empty-state">Aucune route trouvée</td>
+                        <td colspan="12" class="empty-state">Aucune route trouvée</td>
                     </tr>
                     }
                 </tbody>

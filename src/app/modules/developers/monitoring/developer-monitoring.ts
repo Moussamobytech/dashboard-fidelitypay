@@ -62,7 +62,10 @@ export class DeveloperMonitoringComponent implements OnInit, OnDestroy {
 
     // Derived Lists for Dropdowns
     providers = computed(() => [...new Set(this.routes().map(r => r.provider || 'UNKNOWN'))].sort());
-    countries = signal<string[]>([]);
+    countries = computed(() => {
+        const list = this.routes().map(r => this.getCountry(r.country || (r as any).countryName));
+        return [...new Set(list.filter(c => c !== 'N/A' && c !== 'International'))].sort();
+    });
 
     // Filtered Routes
     filteredRoutes = computed(() => {
@@ -142,7 +145,6 @@ export class DeveloperMonitoringComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.loadRoutes();
         this.loadFailures();
-        this.loadCountries();
 
         // Rafraîchir les textes de "Mise à jour" toutes les 10 secondes
         this.refreshInterval = setInterval(() => {
@@ -161,15 +163,7 @@ export class DeveloperMonitoringComponent implements OnInit, OnDestroy {
         this.routes.update(r => [...r]);
     }
 
-    loadCountries() {
-        this.paymentService.getPaymentCountries().subscribe({
-            next: (data) => {
-                const uniqueCountries = [...new Set(data.map(c => this.getCountry(c)))].sort();
-                this.countries.set(uniqueCountries);
-            },
-            error: (err) => console.error('Error loading countries:', err)
-        });
-    }
+
 
     loadRoutes() {
         this.monitoringService.getRoutes().subscribe({

@@ -21,11 +21,17 @@
             <div class="form-group">
                 <div style="display: flex; justify-content: space-between;">
                     <label for="password">Mot de Passe</label>
-                    <a href="#" class="forgot-link">Oublié ?</a>
+                    <a routerLink="/forgot-password" class="forgot-link">Oublié ?</a>
                 </div>
                 <div class="input-container">
                     <span class="material-icons-outlined">lock</span>
-                    <input type="password" id="password" formControlName="password" placeholder="Votre mot de passe">
+                    <input [type]="showPassword() ? 'text' : 'password'" id="password" formControlName="password"
+                        placeholder="Votre mot de passe">
+                    <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
+                        <span class="material-icons-outlined" style="left: auto; color: inherit;">
+                            {{ showPassword() ? 'visibility_off' : 'visibility' }}
+                        </span>
+                    </button>
                 </div>
             </div>
 
