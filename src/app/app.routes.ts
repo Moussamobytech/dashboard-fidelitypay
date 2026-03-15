@@ -55,6 +55,10 @@ export const routes: Routes = [
             {
                 path: 'developer-monitoring',
                 loadComponent: () => import('./modules/developers/monitoring/developer-monitoring').then(m => m.DeveloperMonitoringComponent)
+            },
+            {
+                path: 'users',
+                loadComponent: () => import('./modules/users/users').then(m => m.UsersComponent)
             }
         ]
     }

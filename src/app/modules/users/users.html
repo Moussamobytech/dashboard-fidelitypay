@@ -1,0 +1,206 @@
+<div class="dashboard-header">
+    <div class="header-content">
+        <div>
+            <h1>Gestion des Utilisateurs</h1>
+            <p class="subtitle">Visualisation et administration des comptes utilisateurs du système.</p>
+        </div>
+        <div class="header-actions">
+            <!-- Toggle View -->
+            <div class="view-toggle">
+                <button [class.active]="viewMode() === 'list'" (click)="setViewMode('list')" title="Vue Liste">
+                    <span class="material-icons-outlined">format_list_bulleted</span>
+                </button>
+                <button [class.active]="viewMode() === 'grid'" (click)="setViewMode('grid')" title="Vue Grille">
+                    <span class="material-icons-outlined">grid_view</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content-wrapper">
+
+    <!-- Vue Liste (Tableau) -->
+    <div class="card table-card" *ngIf="viewMode() === 'list'">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Email</th>
+                        <th>Rôle</th>
+                        <th>Application</th>
+                        <th>Pays</th>
+                        <th>Date de création</th>
+                        <th>Statut</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let user of filteredUsers()">
+                        <td>
+                            <div class="user-cell">
+                                <div class="avatar">{{ getInitials(user.fullName) }}</div>
+                                <span class="fw-bold">{{ user.fullName }}</span>
+                            </div>
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <span class="role-badge" [attr.data-role]="user.role">{{ user.role }}</span>
+                        </td>
+                        <td>{{ user.applicationName || '-' }}</td>
+                        <td>{{ user.countries?.join(', ') || '-' }}</td>
+                        <td>{{ formatDate(user.createdAt) }}</td>
+                        <td>
+                            <div class="alert-toggle-cell">
+                                <label class="switch">
+                                    <input type="checkbox" [checked]="user.isActive" (change)="toggleUserStatus(user)">
+                                    <span class="slider round"></span>
+                                </label>
+                                <span class="status-badge" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+                                    {{ user.isActive ? 'Actif' : 'Inactif' }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="text-right actions-cell">
+                            <button class="btn-icon text-indigo" (click)="startEdit(user)" title="Modifier">
+                                <span class="material-icons-outlined">edit</span>
+                            </button>
+                            <button class="btn-icon text-danger" (click)="deleteUser(user)" title="Supprimer">
+                                <span class="material-icons-outlined">delete</span>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="filteredUsers().length === 0">
+                        <td colspan="8" class="empty-state">Aucun utilisateur trouvé.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Vue Grille (Cartes) -->
+    <div class="grid-view" *ngIf="viewMode() === 'grid'">
+        <div class="user-card" *ngFor="let user of filteredUsers()">
+            <div class="card-header">
+                <div class="avatar-large">{{ getInitials(user.fullName) }}</div>
+                <div class="actions">
+                    <button class="btn-icon text-indigo" (click)="startEdit(user)">
+                        <span class="material-icons-outlined">edit</span>
+                    </button>
+                    <button class="btn-icon text-danger" (click)="deleteUser(user)">
+                        <span class="material-icons-outlined">delete</span>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <h3>{{ user.fullName }}</h3>
+                <p class="email text-truncate">{{ user.email }}</p>
+                <div class="tags">
+                    <span class="role-badge" [attr.data-role]="user.role">{{ user.role }}</span>
+                    <div class="alert-toggle-cell" style="margin-left: auto;">
+                        <label class="switch">
+                            <input type="checkbox" [checked]="user.isActive" (change)="toggleUserStatus(user)">
+                            <span class="slider round"></span>
+                        </label>
+                        <span class="status-badge" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+                            {{ user.isActive ? 'Actif' : 'Inactif' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="info-row" *ngIf="user.applicationName">
+                    <span class="material-icons-outlined">apps</span>
+                    <span>{{ user.applicationName }}</span>
+                </div>
+                <div class="info-row" *ngIf="user.countries && user.countries.length > 0">
+                    <span class="material-icons-outlined">public</span>
+                    <span>{{ user.countries.join(', ') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="material-icons-outlined">calendar_today</span>
+                    <span>{{ formatDate(user.createdAt) }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="empty-state w-100" *ngIf="filteredUsers().length === 0">
+            Aucun utilisateur trouvé.
+        </div>
+    </div>
+
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" *ngIf="editingUser()" (click)="cancelEdit()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Modifier l'Utilisateur</h2>
+            <button class="btn-close" (click)="cancelEdit()"><span class="material-icons-outlined">close</span></button>
+        </div>
+        
+        <form (ngSubmit)="saveEdit()" *ngIf="editForm()">
+            <div class="form-group">
+                <label>Nom complet</label>
+                <div class="input-wrapper">
+                    <span class="material-icons-outlined">person</span>
+                    <input type="text" [(ngModel)]="editForm().fullName" name="fullName" required placeholder="Nom et Prénom">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <div class="input-wrapper">
+                    <span class="material-icons-outlined">email</span>
+                    <input type="email" [(ngModel)]="editForm().email" name="email" required placeholder="adresse@email.com">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>Rôle</label>
+                    <div class="input-wrapper select-wrapper">
+                        <span class="material-icons-outlined">admin_panel_settings</span>
+                        <select [(ngModel)]="editForm().role" name="role" required>
+                            <option value="ADMIN">ADMIN</option>
+                            <option value="DEVELOPER">DEVELOPER</option>
+                            <option value="ENTREPRENEUR_CEO">ENTREPRENEUR / CEO</option>
+                            <option value="PRODUCT_MANAGER">PRODUCT MANAGER</option>
+                            <option value="AUTRE">AUTRE</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group flex-1">
+                    <label>Statut du compte</label>
+                    <div class="input-wrapper select-wrapper">
+                        <span class="material-icons-outlined">power_settings_new</span>
+                        <select [(ngModel)]="editForm().isActive" name="isActive">
+                            <option [ngValue]="true">Actif</option>
+                            <option [ngValue]="false">Inactif</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Pays (codes séparés par des virgules)</label>
+                <div class="input-wrapper">
+                    <span class="material-icons-outlined">public</span>
+                    <input type="text" [ngModel]="editCountriesStr()" (ngModelChange)="editCountriesStr.set($event)" name="countriesStr" placeholder="ex: SN, CI, ML">
+                </div>
+            </div>
+            
+            <div class="form-group" *ngIf="editForm().role === 'DEVELOPER'">
+                <label>Nom de l'Application (Développeur)</label>
+                <div class="input-wrapper">
+                    <span class="material-icons-outlined">web</span>
+                    <input type="text" [(ngModel)]="editForm().applicationName" name="applicationName" placeholder="Application">
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" (click)="cancelEdit()">Annuler</button>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>

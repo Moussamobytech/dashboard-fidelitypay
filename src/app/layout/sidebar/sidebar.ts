@@ -28,6 +28,9 @@ export class SidebarComponent {
       items.push({ icon: 'payments', label: 'Transactions', route: '/transactions' });
       items.push({ icon: 'router', label: 'Monitoring', route: '/monitoring' });
       items.push({ icon: 'code', label: 'Développeurs', route: '/developers' });
+      if (role === 'ADMIN') {
+        items.push({ icon: 'people', label: 'Utilisateurs', route: '/users' });
+      }
     }
 
     return items;
