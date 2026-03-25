@@ -26,8 +26,8 @@ export interface ApiKey {
 export class DeveloperService {
     private http = inject(HttpClient);
     private authService = inject(AuthService);
-    private apiUrl = 'http://localhost:8080/api/v1/developer/keys';
-    private adminUrl = 'http://localhost:8080/api/v1/admin/developers';
+    private apiUrl = 'http://localhost:/api/v1/developer/keys';
+    private adminUrl = 'http://localhost:8060/api/v1/admin/developers';
 
     private keysSubject = new BehaviorSubject<ApiKey[]>([]);
 
@@ -35,9 +35,9 @@ export class DeveloperService {
         this.loadKeys();
     }
 
-    private getHeaders() {
-        const userId = this.authService.currentUser()?.userId || 'demo-user';
-        return { 'X-User-Id': userId };
+    private getHeaders(userId?: string) {
+        const id = userId || this.authService.currentUser()?.userId || 'demo-user';
+        return { 'X-User-Id': id };
     }
 
     private loadKeys() {
@@ -54,9 +54,9 @@ export class DeveloperService {
         return this.keysSubject.asObservable();
     }
 
-    generateKey(name: string, environment: 'sandbox' | 'live'): void {
+    generateKey(name: string, userId: string, environment: 'sandbox' | 'live'): void {
         const request = { name, environment, metadata: 'Created via Dashboard' };
-        this.http.post<ApiKey>(this.apiUrl, request, { headers: this.getHeaders() }).subscribe({
+        this.http.post<ApiKey>(this.apiUrl, request, { headers: this.getHeaders(userId) }).subscribe({
             next: (newKey) => {
                 const currentKeys = this.keysSubject.getValue();
                 this.keysSubject.next([...currentKeys, newKey]);

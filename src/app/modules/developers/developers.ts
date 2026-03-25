@@ -120,7 +120,7 @@ export class DevelopersComponent implements OnInit {
     generateNewKey(): void {
         const label = prompt('Entrez un nom pour cette clé :', `Clé ${this.currentEnvironment}`);
         if (label) {
-            this.developerService.generateKey(label, this.currentEnvironment);
+            this.developerService.generateKey(label, this.authService.currentUser()?.userId!, this.currentEnvironment);
         }
     }
 
