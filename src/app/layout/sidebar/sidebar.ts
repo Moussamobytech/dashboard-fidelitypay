@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -11,7 +11,7 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./sidebar.scss']
 })
 export class SidebarComponent {
-
+  @Output() closeSidebar = new EventEmitter<void>();
   readonly authService = inject(AuthService);
 
   readonly menuItems = computed(() => {
@@ -30,6 +30,7 @@ export class SidebarComponent {
       items.push({ icon: 'code', label: 'Développeurs', route: '/developers' });
       if (role === 'ADMIN') {
         items.push({ icon: 'people', label: 'Utilisateurs', route: '/users' });
+        items.push({ icon: 'account_tree', label: 'Agrégateurs', route: '/aggregators' });
       }
     }
 
@@ -38,5 +39,9 @@ export class SidebarComponent {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  handleLinkClick(): void {
+    this.closeSidebar.emit();
   }
 }

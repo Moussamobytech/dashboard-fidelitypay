@@ -1,7 +1,12 @@
 <header class="header">
-    <div class="search-bar">
-        <span class="material-icons-outlined">search</span>
-        <input type="text" placeholder="Rechercher une transaction, un log...">
+    <div class="left-section">
+        <button class="menu-toggle" (click)="onToggle()">
+            <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="search-bar">
+            <span class="material-icons-outlined">search</span>
+            <input type="text" placeholder="Rechercher une transaction, un log...">
+        </div>
     </div>
 
     <div class="actions">

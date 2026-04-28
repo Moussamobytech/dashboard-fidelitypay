@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { ADMIN_USERS_API } from './api.config';
 
 export interface User {
     id: string;
@@ -31,7 +32,7 @@ export interface UserUpdateRequest {
 })
 export class UserService {
     private http = inject(HttpClient);
-    private apiUrl = '/api/v1/admin/users';
+    private apiUrl = ADMIN_USERS_API;
 
     getAllUsers(): Observable<User[]> {
         return this.http.get<User[]>(this.apiUrl);

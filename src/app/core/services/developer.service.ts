@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
+import { DEVELOPER_KEYS_API, ADMIN_DEVELOPERS_API } from './api.config';
 
 export interface ApiKey {
     id: string;
@@ -26,8 +27,8 @@ export interface ApiKey {
 export class DeveloperService {
     private http = inject(HttpClient);
     private authService = inject(AuthService);
-    private apiUrl = 'http://localhost:8080/api/v1/developer/keys';
-    private adminUrl = 'http://localhost:8080/api/v1/admin/developers';
+    private apiUrl = DEVELOPER_KEYS_API;
+    private adminUrl = ADMIN_DEVELOPERS_API;
 
     private keysSubject = new BehaviorSubject<ApiKey[]>([]);
 

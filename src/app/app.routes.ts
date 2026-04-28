@@ -59,6 +59,10 @@ export const routes: Routes = [
             {
                 path: 'users',
                 loadComponent: () => import('./modules/users/users').then(m => m.UsersComponent)
+            },
+            {
+                path: 'aggregators',
+                loadComponent: () => import('./modules/aggregators/aggregators').then(m => m.AggregatorsComponent)
             }
         ]
     }

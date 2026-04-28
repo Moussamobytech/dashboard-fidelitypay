@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Route } from '../models/route.model';
 import { LogEntry } from '../models/log.model';
+import { MONITORING_API } from './api.config';
 
 @Injectable({
     providedIn: 'root'
 })
 export class MonitoringService {
     private http = inject(HttpClient);
-    private apiUrl = '/api/monitoring';
+    private apiUrl = MONITORING_API;
 
     getRoutes(): Observable<Route[]> {
         return this.http.get<Route[]>(`${this.apiUrl}/routes`);

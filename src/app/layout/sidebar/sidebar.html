@@ -6,7 +6,7 @@
 
   <nav class="nav">
     @for (item of menuItems(); track item.label) {
-    <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
+    <a [routerLink]="item.route" routerLinkActive="active" class="nav-item" (click)="handleLinkClick()">
       <span class="material-icons-outlined">{{ item.icon }}</span>
       <span class="label">{{ item.label }}</span>
     </a>

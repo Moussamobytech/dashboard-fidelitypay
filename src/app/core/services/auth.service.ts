@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { AUTH_API_BASE } from './api.config';
 
 export interface AuthResponse {
     token: string;
@@ -35,7 +36,7 @@ export interface CurrentUser {
 }
 
 const STORAGE_KEY = 'fidelitypay_auth';
-const API_BASE = '/api/v1/auth';
+const API_BASE = AUTH_API_BASE;
 
 @Injectable({
     providedIn: 'root'

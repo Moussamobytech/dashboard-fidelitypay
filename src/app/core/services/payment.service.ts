@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { Payment, PaymentInitiateRequest, PaymentResponseDTO } from '../models/payment.model';
+import { PAYMENT_API } from './api.config';
 
 @Injectable({
     providedIn: 'root'
 })
 export class PaymentService {
     private http = inject(HttpClient);
-    private apiUrl = '/api'; // Base API URL
+    private apiUrl = PAYMENT_API; // Base API URL
 
     /**
      * Liste des moyens de paiement disponibles par pays
