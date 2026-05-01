@@ -1,7 +1,7 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AgregateurService, Agregateur } from '../../core/services/agregateur.service';
+import { AgregateurService, Agregateur, CountryConfig } from '../../core/services/agregateur.service';
 
 @Component({
   selector: 'app-aggregators',
@@ -29,36 +29,104 @@ export class AggregatorsComponent implements OnInit {
     cleApblic: '',
     cleApr: '',
     cleAtoken: '',
-    nompays: '',
-    nomOperateur: ''
+    countryConfigs: []
   });
 
   currentOperatorInput = signal('');
+  
+  // Country Search/Selection state
+  countrySearchQuery = signal('');
+  showCountryDropdown = signal(false);
 
-  get operatorsList(): string[] {
-    const raw = (this.editingAggregator() || this.newAggregator()).nomOperateur;
-    return raw ? raw.split(',').map(s => s.trim()).filter(s => s) : [];
+  // Available countries for selection
+  availableCountries = [
+    'Bénin',
+    'Burkina Faso',
+    'Cameroun',
+    'Côte d\'Ivoire',
+    'Guinée',
+    'Mali',
+    'Sénégal',
+    'Togo'
+  ];
+
+  filteredCountries = computed(() => {
+    const query = this.countrySearchQuery().toLowerCase();
+    return this.availableCountries.filter(c => c.toLowerCase().includes(query));
+  });
+
+  toggleCountryDropdown() {
+    this.showCountryDropdown.update(v => !v);
   }
 
-  addOperator(event?: Event) {
+  onSearchBlur() {
+    // Delay hiding to allow click event on options to fire
+    setTimeout(() => this.showCountryDropdown.set(false), 200);
+  }
+
+  selectCountry(country: string) {
+    this.addCountryToConfig(country);
+    this.countrySearchQuery.set('');
+    this.showCountryDropdown.set(false);
+  }
+
+  // Logic to add a country to the aggregator's config
+  addCountryToConfig(country: string) {
+    const current = this.editingAggregator() || this.newAggregator();
+    if (!current.countryConfigs) {
+      current.countryConfigs = [];
+    }
+    if (!current.countryConfigs.some(c => c.countryName === country)) {
+      current.countryConfigs.push({
+        countryName: country,
+        operators: ''
+      });
+    }
+  }
+
+  onCountrySelect(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const country = select.value;
+    if (country) {
+      this.addCountryToConfig(country);
+      select.value = '';
+    }
+  }
+
+  removeCountryFromConfig(country: string) {
+    const current = this.editingAggregator() || this.newAggregator();
+    if (current.countryConfigs) {
+      current.countryConfigs = current.countryConfigs.filter(c => c.countryName !== country);
+    }
+  }
+
+  // Operator logic per country
+  addOperatorToCountry(config: CountryConfig, event?: Event) {
     if (event) event.preventDefault();
     const val = this.currentOperatorInput().trim();
     if (val) {
-      const current = this.editingAggregator() || this.newAggregator();
-      const list = this.operatorsList;
-      if (!list.includes(val)) {
-        list.push(val);
-        current.nomOperateur = list.join(', ');
+      const ops = this.getOperatorsList(config.operators);
+      if (!ops.includes(val)) {
+        ops.push(val);
+        config.operators = ops.join(', ');
         this.currentOperatorInput.set('');
       }
     }
   }
 
-  removeOperator(op: string) {
-    const current = this.editingAggregator() || this.newAggregator();
-    const list = this.operatorsList.filter(o => o !== op);
-    current.nomOperateur = list.join(', ');
+  removeOperatorFromCountry(config: CountryConfig, op: string) {
+    const ops = this.getOperatorsList(config.operators).filter(o => o !== op);
+    config.operators = ops.join(', ');
   }
+
+  getOperatorsList(operators: string): string[] {
+    return operators ? operators.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
+  }
+
+  selectedCountries = computed(() => {
+    const current = this.editingAggregator() || this.newAggregator();
+    return current.countryConfigs ? current.countryConfigs.map(c => c.countryName) : [];
+  });
 
   ngOnInit() {
     this.loadAggregators();
@@ -89,7 +157,7 @@ export class AggregatorsComponent implements OnInit {
 
   addAggregator() {
     const aggregator = this.newAggregator();
-    if (aggregator.nomA && aggregator.nompays && aggregator.nomOperateur) {
+    if (aggregator.nomA && aggregator.countryConfigs && aggregator.countryConfigs.length > 0) {
       this.agregateurService.createAgregateur(aggregator).subscribe({
         next: (created) => {
           this.aggregators.update(list => [...list, created]);
@@ -105,7 +173,12 @@ export class AggregatorsComponent implements OnInit {
   }
 
   startEdit(agg: Agregateur, index: number) {
-    this.editingAggregator.set({ ...agg });
+    // Deep copy to avoid direct mutation before save
+    const copy = JSON.parse(JSON.stringify(agg));
+    if (!copy.countryConfigs) {
+      copy.countryConfigs = [];
+    }
+    this.editingAggregator.set(copy);
   }
 
   cancelEdit() {
@@ -134,9 +207,9 @@ export class AggregatorsComponent implements OnInit {
       cleApblic: '',
       cleApr: '',
       cleAtoken: '',
-      nompays: '',
-      nomOperateur: ''
+      countryConfigs: []
     });
+    this.currentOperatorInput.set('');
   }
 
   deleteAggregator(index: number) {
@@ -164,5 +237,9 @@ export class AggregatorsComponent implements OnInit {
     if (op.includes('STRIPE')) return 'credit_card';
     return 'account_balance_wallet';
   }
-}
 
+  getTotalOperators(agg: Agregateur): number {
+    if (!agg.countryConfigs) return 0;
+    return agg.countryConfigs.reduce((acc, config) => acc + this.getOperatorsList(config.operators).length, 0);
+  }
+}

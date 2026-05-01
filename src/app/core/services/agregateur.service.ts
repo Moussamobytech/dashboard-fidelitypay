@@ -3,14 +3,19 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ADMIN_AGREGATEURS_API } from './api.config';
 
+export interface CountryConfig {
+  id?: number;
+  countryName: string;
+  operators: string; // Comma-separated list
+}
+
 export interface Agregateur {
   id?: number;
   nomA: string;
   cleApblic: string;
   cleApr: string;
   cleAtoken: string;
-  nompays: string;
-  nomOperateur: string;
+  countryConfigs: CountryConfig[];
 }
 
 @Injectable({
