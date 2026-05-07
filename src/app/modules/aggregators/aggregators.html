@@ -3,13 +3,15 @@
         <h1>Gestion des Agrégateurs</h1>
         <p class="subtitle">Configurez et gérez vos partenaires de paiement et passerelles.</p>
     </div>
-    
+
     <div class="header-actions">
         <div class="view-switcher-group">
-            <button class="switcher-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')" title="Vue Liste">
+            <button class="switcher-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')"
+                title="Vue Liste">
                 <span class="material-icons-outlined">view_list</span>
             </button>
-            <button class="switcher-btn" [class.active]="viewMode() === 'grid'" (click)="viewMode.set('grid')" title="Vue Grille">
+            <button class="switcher-btn" [class.active]="viewMode() === 'grid'" (click)="viewMode.set('grid')"
+                title="Vue Grille">
                 <span class="material-icons-outlined">grid_view</span>
             </button>
         </div>
@@ -21,7 +23,8 @@
 </div>
 
 <!-- Modal for Add/Edit Aggregator -->
-<div class="modal-overlay" *ngIf="showAddForm() || editingAggregator()" (click)="editingAggregator() ? cancelEdit() : toggleAddForm()">
+<div class="modal-overlay" *ngIf="showAddForm() || editingAggregator()"
+    (click)="editingAggregator() ? cancelEdit() : toggleAddForm()">
     <div class="modal-container" (click)="$event.stopPropagation()">
         <div class="modal-header">
             <div class="modal-title">
@@ -32,51 +35,87 @@
                 <span class="material-icons-outlined">close</span>
             </button>
         </div>
-        
+
         <div class="modal-body">
             <div class="form-grid">
-                <div class="form-group">
+                <div class="form-group full-width">
                     <label for="nomA">Nom de l'Agrégateur</label>
                     <div class="input-wrapper">
                         <span class="material-icons-outlined">business</span>
-                        <input type="text" id="nomA" [(ngModel)]="(editingAggregator() || newAggregator()).nomA" placeholder="Ex: Kkiapay, PayDunya...">
+                        <input type="text" id="nomA" [(ngModel)]="(editingAggregator() || newAggregator()).nomA"
+                            placeholder="Ex: Kkiapay, PayDunya...">
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="nompays">Pays</label>
-                    <div class="input-wrapper">
-                        <span class="material-icons-outlined">public</span>
-                        <input type="text" id="nompays" [(ngModel)]="(editingAggregator() || newAggregator()).nompays" placeholder="Ex: Bénin, Sénégal...">
-                    </div>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="nomOperateur">Opérateurs couverts</label>
-                    <div class="operators-input-group">
-                        <div class="input-wrapper">
-                            <span class="material-icons-outlined">router</span>
-                            <input type="text" id="nomOperateur" 
-                                   [(ngModel)]="currentOperatorInput" 
-                                   (keyup.enter)="addOperator($event)"
-                                   placeholder="Tapez un opérateur et appuyez sur Entrée (Ex: Orange, MTN...)">
-                        </div>
-                        <button class="btn btn-primary mini-add" (click)="addOperator($event)">
-                            <span class="material-icons-outlined">add</span>
-                        </button>
-                    </div>
-                    <div class="operator-tags-container">
-                        @for (op of operatorsList; track op) {
-                            <span class="op-tag">
-                                {{ op }}
-                                <button (click)="removeOperator(op)">
-                                    <span class="material-icons-outlined">close</span>
+                <div class="form-group full-width config-section">
+                    <label>Configuration par Pays & Opérateurs</label>
+                    <div class="countries-config-wrapper premium-config">
+                        <div class="country-selector premium-selector">
+                            <div class="country-input-wrapper">
+                                <span class="material-icons-outlined">search</span>
+                                <input type="text"
+                                       id="countrySearch"
+                                       [(ngModel)]="countrySearchQuery"
+                                       (focus)="showCountryDropdown.set(true)"
+                                       (blur)="onSearchBlur()"
+                                       placeholder="Rechercher un pays...">
+                                <button class="dropdown-toggle" (click)="toggleCountryDropdown()" type="button">
+                                    <span class="material-icons-outlined">{{ showCountryDropdown() ? 'expand_less' : 'expand_more' }}</span>
                                 </button>
-                            </span>
-                        }
-                        @if (operatorsList.length === 0) {
-                            <p class="helper-text">Ajoutez au moins un opérateur</p>
-                        }
+                            </div>
+                            <div class="country-dropdown-list" *ngIf="showCountryDropdown()">
+                                @for (country of filteredCountries; track country) {
+                                <div class="country-option" (click)="selectCountry(country)"
+                                    [class.selected]="selectedCountries.includes(country)">
+                                    <span>{{ country }}</span>
+                                    @if (selectedCountries.includes(country)) {
+                                    <span class="material-icons-outlined check-icon">check_circle</span>
+                                    }
+                                </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="nested-config-list premium-list">
+                            @for (config of (editingAggregator() || newAggregator()).countryConfigs; track config.countryName) {
+                            <div class="country-config-card">
+                                <div class="card-header-badge">
+                                    <div class="country-badge">
+                                        <span class="material-icons-outlined">flag</span>
+                                        <span class="country-name">{{ config.countryName }}</span>
+                                        <span class="operator-count-badge">{{ getOperatorsList(config.operators).length }} op.</span>
+                                    </div>
+                                    <button class="remove-country-btn" (click)="removeCountryFromConfig(config.countryName)">
+                                        <span class="material-icons-outlined">delete_outline</span>
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="operator-add-row">
+                                        <div class="operator-input-group">
+                                            <input type="text" 
+                                                   [(ngModel)]="currentOperatorInput" 
+                                                   (keyup.enter)="addOperatorToCountry(config, $event)"
+                                                   placeholder="Opérateur..." 
+                                                   class="operator-input">
+                                            <button (click)="addOperatorToCountry(config, $event)" class="add-operator-btn">
+                                                <span class="material-icons-outlined">add</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="operators-tags-container">
+                                        @for (op of getOperatorsList(config.operators); track op) {
+                                        <div class="operator-tag">
+                                            <span class="operator-name">{{ op }}</span>
+                                            <button (click)="removeOperatorFromCountry(config, op)" class="remove-op">
+                                                <span class="material-icons-outlined">close</span>
+                                            </button>
+                                        </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            }
+                        </div>
                     </div>
                 </div>
 
@@ -84,7 +123,8 @@
                     <label for="cleApblic">Clé Publique</label>
                     <div class="input-wrapper">
                         <span class="material-icons-outlined">vpn_key</span>
-                        <input type="text" id="cleApblic" [(ngModel)]="(editingAggregator() || newAggregator()).cleApblic" placeholder="pk_live_...">
+                        <input type="text" id="cleApblic"
+                            [(ngModel)]="(editingAggregator() || newAggregator()).cleApblic" placeholder="pk_live_...">
                     </div>
                 </div>
 
@@ -92,7 +132,17 @@
                     <label for="cleApr">Clé Privée (Secret)</label>
                     <div class="input-wrapper">
                         <span class="material-icons-outlined">lock</span>
-                        <input type="password" id="cleApr" [(ngModel)]="(editingAggregator() || newAggregator()).cleApr" placeholder="sk_live_...">
+                        <input type="password" id="cleApr" [(ngModel)]="(editingAggregator() || newAggregator()).cleApr"
+                            placeholder="sk_live_...">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cleAmaster">Clé Master / Secret Key (Kkiapay)</label>
+                    <div class="input-wrapper">
+                        <span class="material-icons-outlined">vpn_key</span>
+                        <input type="text" id="cleAmaster"
+                            [(ngModel)]="(editingAggregator() || newAggregator()).cleAmaster" placeholder="mk_live_ ou sk_live_">
                     </div>
                 </div>
 
@@ -100,7 +150,18 @@
                     <label for="cleAtoken">Token d'accès</label>
                     <div class="input-wrapper">
                         <span class="material-icons-outlined">token</span>
-                        <input type="text" id="cleAtoken" [(ngModel)]="(editingAggregator() || newAggregator()).cleAtoken" placeholder="Bearer ...">
+                        <input type="text" id="cleAtoken"
+                            [(ngModel)]="(editingAggregator() || newAggregator()).cleAtoken" placeholder="Bearer ...">
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="baseUrl">URL de base de l'API (Optionnel)</label>
+                    <div class="input-wrapper">
+                        <span class="material-icons-outlined">language</span>
+                        <input type="text" id="baseUrl"
+                            [(ngModel)]="(editingAggregator() || newAggregator()).baseUrl" placeholder="https://app.paydunya.com/api/v1">
+                        <div class="input-hint">Laissez vide pour utiliser l'URL par défaut du système.</div>
                     </div>
                 </div>
             </div>
@@ -110,7 +171,8 @@
             <button class="btn btn-outline" (click)="editingAggregator() ? cancelEdit() : resetForm()">
                 {{ editingAggregator() ? 'Annuler' : 'Effacer' }}
             </button>
-            <button class="btn btn-primary" (click)="editingAggregator() ? saveEdit() : addAggregator()" [disabled]="!(editingAggregator() || newAggregator()).nomA">
+            <button class="btn btn-primary" (click)="editingAggregator() ? saveEdit() : addAggregator()"
+                [disabled]="!(editingAggregator() || newAggregator()).nomA">
                 <span class="material-icons-outlined">save</span>
                 {{ editingAggregator() ? 'Mettre à jour' : 'Enregistrer' }}
             </button>
@@ -130,55 +192,81 @@
                 <span class="material-icons-outlined">close</span>
             </button>
         </div>
-        
+
         <div class="modal-body" *ngIf="viewingAggregator() as agg">
-            <div class="details-grid">
-                <div class="detail-item full">
-                    <label>Nom de l'Agrégateur</label>
-                    <div class="detail-value highlight">{{ agg.nomA }}</div>
-                </div>
-                
-                <div class="detail-item">
-                    <label>Pays</label>
-                    <div class="detail-value">
-                        <span class="material-icons-outlined">public</span>
-                        {{ agg.nompays }}
+            <div class="agg-details-premium">
+                <div class="agg-info-header">
+                    <div class="agg-avatar">{{ agg.nomA.charAt(0) }}</div>
+                    <div class="agg-main-title">
+                        <h3>{{ agg.nomA }}</h3>
+                        <span class="status-badge">Actif</span>
+                        <span class="url-badge" *ngIf="agg.baseUrl">{{ agg.baseUrl }}</span>
                     </div>
                 </div>
 
-                <div class="detail-item">
-                    <label>Opérateurs couverts</label>
-                    <div class="detail-tags">
-                        @for (op of agg.nomOperateur.split(','); track op) {
-                            @if (op.trim()) {
-                                <span class="tag tag-operator">{{ op.trim() }}</span>
+                <div class="details-main-grid">
+                    <div class="details-column">
+                        <h4 class="section-title"><span class="material-icons-outlined">key</span> Paramètres API</h4>
+                        <div class="credential-cards">
+                            <div class="cred-card">
+                                <label>Clé Publique</label>
+                                <div class="cred-value code-font">
+                                    <code>{{ agg.cleApblic }}</code>
+                                </div>
+                            </div>
+                            <div class="cred-card">
+                                <label>Clé Privée (Secret)</label>
+                                <div class="cred-value code-font private">
+                                    <code>••••••••••••••••••••••••••••••••</code>
+                                    <span class="material-icons-outlined lock-icon">lock</span>
+                                </div>
+                            </div>
+                            <div class="cred-card">
+                                <label>Clé Master / Secret Key</label>
+                                <div class="cred-value code-font">
+                                    <code>{{ agg.cleAmaster || 'Non configuré' }}</code>
+                                </div>
+                            </div>
+                            <div class="cred-card">
+                                <label>Token d'accès</label>
+                                <div class="cred-value code-font">
+                                    <code>{{ agg.cleAtoken || 'Non configuré' }}</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="details-column">
+                        <h4 class="section-title"><span class="material-icons-outlined">public</span> Couverture Géographique</h4>
+                        <div class="details-country-grid">
+                            @for (config of agg.countryConfigs; track config.countryName) {
+                            <div class="details-country-box">
+                                <div class="country-box-header">
+                                    <span class="country-name-text">{{ config.countryName }}</span>
+                                    <span class="op-count">{{ getOperatorsList(config.operators).length }} op.</span>
+                                </div>
+                                <div class="country-box-tags">
+                                    @for (op of getOperatorsList(config.operators); track op) {
+                                    <span class="mini-op-tag">
+                                        <span class="material-icons-outlined">{{ getOperatorIcon(op) }}</span>
+                                        {{ op }}
+                                    </span>
+                                    }
+                                </div>
+                            </div>
                             }
-                        }
+                        </div>
                     </div>
-                </div>
-
-                <div class="detail-item full">
-                    <label>Clé Publique</label>
-                    <div class="detail-value code">{{ agg.cleApblic }}</div>
-                </div>
-
-                <div class="detail-item full">
-                    <label>Clé Privée (Secret)</label>
-                    <div class="detail-value code private">
-                        <span class="material-icons-outlined">lock</span>
-                        ••••••••••••••••••••••••••••••••
-                    </div>
-                </div>
-
-                <div class="detail-item full">
-                    <label>Token d'accès</label>
-                    <div class="detail-value code">{{ agg.cleAtoken || 'Aucun token configuré' }}</div>
                 </div>
             </div>
         </div>
 
         <div class="modal-footer">
-            <button class="btn btn-primary" (click)="viewingAggregator.set(null)">Fermer</button>
+            <button class="btn btn-outline" (click)="viewingAggregator.set(null)">Fermer</button>
+            <button class="btn btn-primary" (click)="startEdit(viewingAggregator()!, 0); viewingAggregator.set(null)">
+                <span class="material-icons-outlined">edit</span>
+                Modifier
+            </button>
         </div>
     </div>
 </div>
@@ -196,64 +284,53 @@
                     <tr>
                         <th>Nom</th>
                         <th>Pays</th>
-                        <th>Opérateur</th>
+                        <th>Opérateurs</th>
                         <th>Clé Publique</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let agg of aggregators(); let i = index">
+                    @for (agg of aggregators(); track agg.id; let i = $index) {
+                    <tr>
                         <td>
                             <div class="name-cell">
-                                <div class="avatar-icon">
-                                    {{ agg.nomA.charAt(0) }}
-                                </div>
+                                <div class="avatar-icon">{{ agg.nomA.charAt(0) }}</div>
                                 <span class="font-bold">{{ agg.nomA }}</span>
                             </div>
                         </td>
                         <td>
                             <div class="country-cell">
-                                <span class="material-icons-outlined">location_on</span>
-                                {{ agg.nompays }}
+                                <div class="country-tags">
+                                    @for (config of agg.countryConfigs; track config.countryName) {
+                                    <span class="country-tag-mini">{{ config.countryName }}</span>
+                                    }
+                                </div>
                             </div>
                         </td>
                         <td>
                             <div class="operators-stack">
-                                @for (op of agg.nomOperateur.split(','); track op) {
-                                    @if (op.trim()) {
-                                        <div class="operator-cell">
-                                            <span class="operator-icon" [attr.data-operator]="op.trim().toUpperCase()">
-                                                <span class="material-icons-outlined">{{ getOperatorIcon(op.trim()) }}</span>
-                                            </span>
-                                            <span class="operator-name">{{ op.trim() }}</span>
-                                        </div>
+                                @for (config of agg.countryConfigs; track config.countryName) {
+                                    @for (op of getOperatorsList(config.operators); track op) {
+                                    <div class="operator-cell">
+                                        <span class="operator-icon" [attr.data-operator]="op.toUpperCase()">
+                                            <span class="material-icons-outlined">{{ getOperatorIcon(op) }}</span>
+                                        </span>
+                                        <span class="operator-name">{{ op }} ({{ config.countryName }})</span>
+                                    </div>
                                     }
                                 }
                             </div>
                         </td>
-                        <td>
-                            <code class="key-badge">{{ agg.cleApblic | slice:0:12 }}...</code>
-                        </td>
+                        <td><code class="key-badge">{{ agg.cleApblic | slice:0:12 }}...</code></td>
                         <td>
                             <div class="actions-group">
-                                <button class="action-btn view" (click)="viewingAggregator.set(agg)" title="Voir détails">
-                                    <span class="material-icons-outlined">visibility</span>
-                                </button>
-                                <button class="action-btn edit" (click)="startEdit(agg, i)" title="Modifier">
-                                    <span class="material-icons-outlined">edit</span>
-                                </button>
-                                <button class="action-btn delete" (click)="deleteAggregator(i)" title="Supprimer">
-                                    <span class="material-icons-outlined">delete_outline</span>
-                                </button>
+                                <button class="action-btn view" (click)="viewingAggregator.set(agg)"><span class="material-icons-outlined">visibility</span></button>
+                                <button class="action-btn edit" (click)="startEdit(agg, i)"><span class="material-icons-outlined">edit</span></button>
+                                <button class="action-btn delete" (click)="deleteAggregator(i)"><span class="material-icons-outlined">delete_outline</span></button>
                             </div>
                         </td>
                     </tr>
-                    <tr *ngIf="aggregators().length === 0">
-                        <td colspan="5" class="empty-state">
-                            <span class="material-icons-outlined">info</span>
-                            Aucun agrégateur configuré
-                        </td>
-                    </tr>
+                    }
                 </tbody>
             </table>
         </div>
@@ -261,47 +338,51 @@
 
     <!-- GRID VIEW -->
     <div class="grid-layout" *ngIf="viewMode() === 'grid'">
-        <div class="agg-card-premium" *ngFor="let agg of aggregators(); let i = index">
-            <div class="card-glow"></div>
-            <div class="card-top">
-                <div class="operators-badge-group">
-                    @for (op of agg.nomOperateur.split(','); track op) {
-                        @if (op.trim()) {
-                            <div class="operator-icon-mini" [attr.data-operator]="op.trim().toUpperCase()" [title]="op.trim()">
-                                <span class="material-icons-outlined">{{ getOperatorIcon(op.trim()) }}</span>
-                            </div>
-                        }
-                    }
+        @for (agg of aggregators(); track agg.id; let i = $index) {
+        <div class="agg-card-premium">
+            <div class="card-header-top">
+                <div class="agg-brand">
+                    <div class="agg-icon-box">{{ agg.nomA.charAt(0) }}</div>
+                    <div class="agg-name-stack">
+                        <h3>{{ agg.nomA }}</h3>
+                        <span class="agg-id-badge">ID: #{{ agg.id }}</span>
+                    </div>
                 </div>
-                <div class="card-actions">
-                    <button class="mini-btn view" (click)="viewingAggregator.set(agg)" title="Détails"><span class="material-icons-outlined">visibility</span></button>
-                    <button class="mini-btn edit" (click)="startEdit(agg, i)" title="Modifier"><span class="material-icons-outlined">edit</span></button>
-                    <button class="mini-btn delete" (click)="deleteAggregator(i)" title="Supprimer"><span class="material-icons-outlined">delete</span></button>
+                <div class="card-actions-floating">
+                    <button class="btn-icon" (click)="viewingAggregator.set(agg)"><span class="material-icons-outlined">visibility</span></button>
                 </div>
             </div>
-            <div class="card-info">
-                <h3>{{ agg.nomA }}</h3>
-                <div class="card-tags">
-                    <span class="tag tag-country">
-                        <span class="material-icons-outlined">public</span>
-                        {{ agg.nompays }}
-                    </span>
-                    <div class="operators-tags">
-                        @for (op of agg.nomOperateur.split(','); track op) {
-                            @if (op.trim()) {
-                                <span class="tag tag-operator">{{ op.trim() }}</span>
-                            }
+
+            <div class="card-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Pays</span>
+                    <span class="stat-value">{{ agg.countryConfigs.length }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Opérateurs</span>
+                    <span class="stat-value">{{ getTotalOperators(agg) }}</span>
+                </div>
+            </div>
+
+            <div class="card-countries-preview">
+                @for (config of agg.countryConfigs.slice(0, 3); track config.countryName) {
+                <div class="country-preview-line">
+                    <span class="material-icons-outlined">public</span>
+                    <span class="c-name">{{ config.countryName }}</span>
+                    <div class="c-ops">
+                        @for (op of getOperatorsList(config.operators).slice(0, 2); track op) {
+                        <span class="mini-dot" [attr.data-operator]="op.toUpperCase()" [title]="op"></span>
                         }
                     </div>
                 </div>
+                }
             </div>
-            <div class="card-footer">
-                <div class="key-preview">
-                    <span class="label">Public Key</span>
-                    <span class="value">{{ agg.cleApblic | slice:0:20 }}...</span>
-                </div>
+
+            <div class="card-footer-actions">
+                <button class="btn-card edit" (click)="startEdit(agg, i)">Modifier</button>
+                <button class="btn-card delete" (click)="deleteAggregator(i)"><span class="material-icons-outlined">delete</span></button>
             </div>
         </div>
+        }
     </div>
 </div>
-
