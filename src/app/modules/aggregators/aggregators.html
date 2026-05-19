@@ -129,7 +129,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="cleApr">Clé Privée (Secret)</label>
+                    <label for="cleApr">Clé Privée</label>
                     <div class="input-wrapper">
                         <span class="material-icons-outlined">lock</span>
                         <input type="password" id="cleApr" [(ngModel)]="(editingAggregator() || newAggregator()).cleApr"
@@ -138,13 +138,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="cleAmaster">Clé Master / Secret Key (Kkiapay)</label>
+                    <label for="cleAmaster">Clé Master</label>
                     <div class="input-wrapper">
                         <span class="material-icons-outlined">vpn_key</span>
                         <input type="text" id="cleAmaster"
-                            [(ngModel)]="(editingAggregator() || newAggregator()).cleAmaster" placeholder="mk_live_ ou sk_live_">
+                            [(ngModel)]="(editingAggregator() || newAggregator()).cleAmaster" placeholder="mk_live_...">
                     </div>
                 </div>
+
+
 
                 <div class="form-group full-width">
                     <label for="cleAtoken">Token d'accès</label>
@@ -196,7 +198,7 @@
         <div class="modal-body" *ngIf="viewingAggregator() as agg">
             <div class="agg-details-premium">
                 <div class="agg-info-header">
-                    <div class="agg-avatar">{{ agg.nomA.charAt(0) }}</div>
+                    <div class="agg-avatar">{{ (agg.nomA || '').trim().charAt(0) | uppercase }}</div>
                     <div class="agg-main-title">
                         <h3>{{ agg.nomA }}</h3>
                         <span class="status-badge">Actif</span>
@@ -222,11 +224,12 @@
                                 </div>
                             </div>
                             <div class="cred-card">
-                                <label>Clé Master / Secret Key</label>
+                                <label>Clé Master</label>
                                 <div class="cred-value code-font">
                                     <code>{{ agg.cleAmaster || 'Non configuré' }}</code>
                                 </div>
                             </div>
+
                             <div class="cred-card">
                                 <label>Token d'accès</label>
                                 <div class="cred-value code-font">
@@ -294,7 +297,7 @@
                     <tr>
                         <td>
                             <div class="name-cell">
-                                <div class="avatar-icon">{{ agg.nomA.charAt(0) }}</div>
+                                <div class="avatar-icon">{{ (agg.nomA || '').trim().charAt(0) | uppercase }}</div>
                                 <span class="font-bold">{{ agg.nomA }}</span>
                             </div>
                         </td>
@@ -342,7 +345,7 @@
         <div class="agg-card-premium">
             <div class="card-header-top">
                 <div class="agg-brand">
-                    <div class="agg-icon-box">{{ agg.nomA.charAt(0) }}</div>
+                    <div class="agg-icon-box">{{ (agg.nomA || '').trim().charAt(0) | uppercase }}</div>
                     <div class="agg-name-stack">
                         <h3>{{ agg.nomA }}</h3>
                         <span class="agg-id-badge">ID: #{{ agg.id }}</span>
