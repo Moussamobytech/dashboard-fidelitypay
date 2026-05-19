@@ -20,6 +20,10 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/auth/forgot-password').then(m => m.ForgotPasswordComponent)
     },
     {
+        path: 'api-docs',
+        loadComponent: () => import('./modules/public-api-docs/public-api-docs').then(m => m.PublicApiDocsComponent)
+    },
+    {
         path: '',
         component: MainLayoutComponent,
         children: [

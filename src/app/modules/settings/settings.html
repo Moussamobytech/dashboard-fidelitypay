@@ -6,34 +6,34 @@
 <div class="settings-container">
     <div class="card settings-card">
         <div class="card-header">
-            <h3>Configuration Webhook</h3>
-            <span class="badge badge-info">Système</span>
+            <h3>Webhook marchand</h3>
+            <span class="badge badge-info">Marchand</span>
         </div>
         <div class="card-body">
             <p class="description">
-                Configurez l'URL du webhook pour recevoir les notifications de paiement en temps réel.
-                Le système enverra une requête POST avec les détails de la transaction à cette adresse.
+                Configurez l'URL publique de votre serveur marchand pour recevoir les notifications de paiement en
+                temps réel. Les callbacks des fournisseurs de paiement sont reçus et traités en interne par Fidelity Pay.
+            </p>
+            <p class="description">
+                Callbacks fournisseurs internes: {{ providerCallbackInfo }}
             </p>
 
             <div class="form-group">
-                <label for="webhookUrl">URL du Webhook</label>
+                <label for="webhookUrl">URL du webhook marchand</label>
                 <div class="input-wrapper">
                     <span class="material-icons-outlined prefix">link</span>
                     <input type="text" id="webhookUrl" [value]="webhookUrl()" (input)="updateWebhookUrl($event)"
-                        placeholder="https://votre-api.com/webhook/fidelity-pay">
+                        placeholder="https://votre-api.com/webhooks/fidelity-pay">
                 </div>
             </div>
 
             <div class="actions">
-                <button class="btn btn-primary" (click)="saveSettings()">
+                <button class="btn btn-primary" (click)="saveSettings()" [disabled]="isSaving()">
                     <span class="material-icons-outlined">save</span>
-                    Enregistrer les modifications
-                </button>
-                <button class="btn btn-outline" (click)="testWebhook()">
-                    <span class="material-icons-outlined">send</span>
-                    Tester le Webhook
+                    {{ isSaving() ? 'Enregistrement...' : 'Enregistrer les modifications' }}
                 </button>
             </div>
+            <p class="description" *ngIf="statusMessage()">{{ statusMessage() }}</p>
         </div>
     </div>
 </div>

@@ -36,6 +36,21 @@ ng build
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
 
+## Developer API Coherence
+
+The dashboard developer area documents direct HTTP integration with Fidelity Pay API keys. It should not reference an unpublished SDK. Merchant servers initiate pay-ins with `X-API-Public-Key`, `X-API-Secret-Key`, and `Idempotency-Key`, then receive merchant-facing webhook notifications on their configured endpoint.
+
+Provider callbacks are platform-internal: payment providers call Fidelity Pay, then Fidelity Pay reconciles the payment state and optionally notifies the merchant webhook.
+
+Supported payment statuses displayed by the dashboard are:
+
+- `PENDING`
+- `REQUIRES_ACTION`
+- `PENDING_RECONCILIATION`
+- `SUCCESS`
+- `FAILED`
+- `CANCELLED`
+
 ## Running unit tests
 
 To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:

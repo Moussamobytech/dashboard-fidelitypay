@@ -2,8 +2,11 @@ import { ErrorType } from './route.model';
 
 export enum PaymentStatus {
     PENDING = 'PENDING',
+    REQUIRES_ACTION = 'REQUIRES_ACTION',
+    PENDING_RECONCILIATION = 'PENDING_RECONCILIATION',
     SUCCESS = 'SUCCESS',
-    FAILED = 'FAILED'
+    FAILED = 'FAILED',
+    CANCELLED = 'CANCELLED'
 }
 
 export interface Payment {
@@ -45,4 +48,3 @@ export interface PaymentResponseDTO {
     routeProvider: string;
     routeLatency: number;
 }
-

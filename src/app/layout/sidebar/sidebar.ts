@@ -23,6 +23,7 @@ export class SidebarComponent {
       items.push({ icon: 'payments', label: 'Transactions', route: '/developer-transactions' });
       items.push({ icon: 'router', label: 'Monitoring', route: '/developer-monitoring' });
       items.push({ icon: 'code', label: 'Intégration & Clés', route: '/developers' });
+      items.push({ icon: 'account_tree', label: 'Agrégateurs', route: '/aggregators' });
     } else {
       items.push({ icon: 'dashboard', label: 'Dashboard', route: '/dashboard' });
       items.push({ icon: 'payments', label: 'Transactions', route: '/transactions' });

@@ -1,7 +1,7 @@
 <div class="dashboard-header">
     <div class="title-group">
         <h1>Gestion des Agrégateurs</h1>
-        <p class="subtitle">Configurez et gérez vos partenaires de paiement et passerelles.</p>
+        <p class="subtitle">{{ isAdmin() ? 'Configurez les partenaires de paiement de la plateforme.' : 'Ajoutez vos agrégateurs et activez uniquement ceux que votre serveur doit utiliser.' }}</p>
     </div>
     
     <div class="header-actions">
@@ -137,6 +137,15 @@
                     <label>Nom de l'Agrégateur</label>
                     <div class="detail-value highlight">{{ agg.nomA }}</div>
                 </div>
+
+                <div class="detail-item">
+                    <label>Statut</label>
+                    <div class="detail-value">
+                        <span class="status-badge" [class.active]="agg.enabled !== false" [class.inactive]="agg.enabled === false">
+                            {{ agg.enabled !== false ? 'Activé' : 'Désactivé' }}
+                        </span>
+                    </div>
+                </div>
                 
                 <div class="detail-item">
                     <label>Pays</label>
@@ -198,6 +207,7 @@
                         <th>Pays</th>
                         <th>Opérateur</th>
                         <th>Clé Publique</th>
+                        <th>Statut</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -235,7 +245,17 @@
                             <code class="key-badge">{{ agg.cleApblic | slice:0:12 }}...</code>
                         </td>
                         <td>
+                            <span class="status-badge" [class.active]="agg.enabled !== false" [class.inactive]="agg.enabled === false">
+                                {{ agg.enabled !== false ? 'Activé' : 'Désactivé' }}
+                            </span>
+                        </td>
+                        <td>
                             <div class="actions-group">
+                                <button class="action-btn" [class.delete]="agg.enabled !== false" [class.view]="agg.enabled === false"
+                                    (click)="toggleAggregatorEnabled(agg)"
+                                    [title]="agg.enabled !== false ? 'Désactiver' : 'Activer'">
+                                    <span class="material-icons-outlined">{{ agg.enabled !== false ? 'toggle_on' : 'toggle_off' }}</span>
+                                </button>
                                 <button class="action-btn view" (click)="viewingAggregator.set(agg)" title="Voir détails">
                                     <span class="material-icons-outlined">visibility</span>
                                 </button>
@@ -249,7 +269,7 @@
                         </td>
                     </tr>
                     <tr *ngIf="aggregators().length === 0">
-                        <td colspan="5" class="empty-state">
+                        <td colspan="6" class="empty-state">
                             <span class="material-icons-outlined">info</span>
                             Aucun agrégateur configuré
                         </td>
@@ -274,6 +294,11 @@
                     }
                 </div>
                 <div class="card-actions">
+                    <button class="mini-btn" [class.delete]="agg.enabled !== false" [class.view]="agg.enabled === false"
+                        (click)="toggleAggregatorEnabled(agg)"
+                        [title]="agg.enabled !== false ? 'Désactiver' : 'Activer'">
+                        <span class="material-icons-outlined">{{ agg.enabled !== false ? 'toggle_on' : 'toggle_off' }}</span>
+                    </button>
                     <button class="mini-btn view" (click)="viewingAggregator.set(agg)" title="Détails"><span class="material-icons-outlined">visibility</span></button>
                     <button class="mini-btn edit" (click)="startEdit(agg, i)" title="Modifier"><span class="material-icons-outlined">edit</span></button>
                     <button class="mini-btn delete" (click)="deleteAggregator(i)" title="Supprimer"><span class="material-icons-outlined">delete</span></button>
@@ -281,6 +306,9 @@
             </div>
             <div class="card-info">
                 <h3>{{ agg.nomA }}</h3>
+                <span class="status-badge" [class.active]="agg.enabled !== false" [class.inactive]="agg.enabled === false">
+                    {{ agg.enabled !== false ? 'Activé' : 'Désactivé' }}
+                </span>
                 <div class="card-tags">
                     <span class="tag tag-country">
                         <span class="material-icons-outlined">public</span>
@@ -304,4 +332,3 @@
         </div>
     </div>
 </div>
-

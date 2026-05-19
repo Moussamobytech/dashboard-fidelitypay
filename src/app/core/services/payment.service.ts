@@ -30,7 +30,9 @@ export class PaymentService {
     }
 
     /**
-     * Statut d’un paiement
+     * Statut d’un paiement.
+     * Valeurs possibles: PENDING, REQUIRES_ACTION, PENDING_RECONCILIATION,
+     * SUCCESS, FAILED, CANCELLED.
      * GET /api/payments/status/{paymentId}
      */
     getPaymentStatus(paymentId: string): Observable<Payment> {

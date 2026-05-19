@@ -1,5 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { DeveloperService, ApiKey } from '../../core/services/developer.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { Payment, PaymentStatus } from '../../core/models/payment.model';
@@ -8,7 +10,7 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
     selector: 'app-developers',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, FormsModule, RouterModule],
     templateUrl: './developers.html',
     styleUrls: ['./developers.scss']
 })
@@ -18,6 +20,10 @@ export class DevelopersComponent implements OnInit {
     private authService = inject(AuthService);
 
     currentEnvironment: 'sandbox' | 'live' = 'sandbox';
+    newKeyName = '';
+    isCreatingKey = signal(false);
+    createError = signal<string | null>(null);
+    createdKey = signal<ApiKey | null>(null);
     allKeys = signal<ApiKey[]>([]);
     filteredKeys = signal<ApiKey[]>([]);
     Math = Math;
@@ -26,6 +32,7 @@ export class DevelopersComponent implements OnInit {
     currentPage = signal(1);
     pageSize = signal(10);
     firstKey = computed(() => this.paginatedKeys().length > 0 ? this.paginatedKeys()[0].publicKey : 'VOTRE_CLE_API');
+    firstSecret = computed(() => 'VOTRE_SECRET_API');
 
     paginatedKeys = computed(() => {
         const startIndex = (this.currentPage() - 1) * this.pageSize();
@@ -118,10 +125,27 @@ export class DevelopersComponent implements OnInit {
     }
 
     generateNewKey(): void {
-        const label = prompt('Entrez un nom pour cette clé :', `Clé ${this.currentEnvironment}`);
-        if (label) {
-            this.developerService.generateKey(label, this.currentEnvironment);
+        const label = this.newKeyName.trim();
+        if (!label || this.isAdmin()) {
+            return;
         }
+        this.isCreatingKey.set(true);
+        this.createError.set(null);
+        this.developerService.createKey(label, this.currentEnvironment).subscribe({
+            next: (key) => {
+                this.developerService.addKeyToState(key);
+                this.allKeys.update(keys => [...keys, key]);
+                this.filterKeys();
+                this.activeKeysCount.set(this.allKeys().filter(k => k.isActive).length);
+                this.createdKey.set(key);
+                this.newKeyName = '';
+                this.isCreatingKey.set(false);
+            },
+            error: () => {
+                this.createError.set('Impossible de créer la clé. Vérifiez votre session puis réessayez.');
+                this.isCreatingKey.set(false);
+            }
+        });
     }
 
     revokeKey(id: string): void {
@@ -168,5 +192,9 @@ export class DevelopersComponent implements OnInit {
         navigator.clipboard.writeText(text).then(() => {
             alert('Copié dans le presse-papier !');
         });
+    }
+
+    closeCreatedKey(): void {
+        this.createdKey.set(null);
     }
 }

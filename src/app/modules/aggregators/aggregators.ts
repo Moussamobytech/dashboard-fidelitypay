@@ -2,6 +2,7 @@ import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AgregateurService, Agregateur } from '../../core/services/agregateur.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-aggregators',
@@ -12,6 +13,7 @@ import { AgregateurService, Agregateur } from '../../core/services/agregateur.se
 })
 export class AggregatorsComponent implements OnInit {
   private agregateurService = inject(AgregateurService);
+  private authService = inject(AuthService);
 
   viewMode = signal<'list' | 'grid'>('list');
   aggregators = signal<Agregateur[]>([]);
@@ -22,6 +24,7 @@ export class AggregatorsComponent implements OnInit {
   // Editing state
   editingAggregator = signal<Agregateur | null>(null);
   viewingAggregator = signal<Agregateur | null>(null);
+  isAdmin = this.authService.isAdmin;
 
   // Form fields
   newAggregator = signal<Agregateur>({
@@ -30,7 +33,8 @@ export class AggregatorsComponent implements OnInit {
     cleApr: '',
     cleAtoken: '',
     nompays: '',
-    nomOperateur: ''
+    nomOperateur: '',
+    enabled: true
   });
 
   currentOperatorInput = signal('');
@@ -66,7 +70,7 @@ export class AggregatorsComponent implements OnInit {
 
   loadAggregators() {
     this.isLoading.set(true);
-    this.agregateurService.getAllAgregateurs().subscribe({
+    this.agregateurService.getAllAgregateurs(this.isAdmin()).subscribe({
       next: (data) => {
         this.aggregators.set(data);
         this.isLoading.set(false);
@@ -90,7 +94,7 @@ export class AggregatorsComponent implements OnInit {
   addAggregator() {
     const aggregator = this.newAggregator();
     if (aggregator.nomA && aggregator.nompays && aggregator.nomOperateur) {
-      this.agregateurService.createAgregateur(aggregator).subscribe({
+      this.agregateurService.createAgregateur(aggregator, this.isAdmin()).subscribe({
         next: (created) => {
           this.aggregators.update(list => [...list, created]);
           this.resetForm();
@@ -115,7 +119,7 @@ export class AggregatorsComponent implements OnInit {
   saveEdit() {
     const edited = this.editingAggregator();
     if (edited && edited.id) {
-      this.agregateurService.updateAgregateur(edited.id, edited).subscribe({
+      this.agregateurService.updateAgregateur(edited.id, edited, this.isAdmin()).subscribe({
         next: (updated) => {
           this.aggregators.update(list => list.map(a => a.id === updated.id ? updated : a));
           this.cancelEdit();
@@ -135,14 +139,15 @@ export class AggregatorsComponent implements OnInit {
       cleApr: '',
       cleAtoken: '',
       nompays: '',
-      nomOperateur: ''
+      nomOperateur: '',
+      enabled: true
     });
   }
 
   deleteAggregator(index: number) {
     const agg = this.aggregators()[index];
     if (agg && agg.id && confirm('Voulez-vous vraiment supprimer cet agrégateur ?')) {
-      this.agregateurService.deleteAgregateur(agg.id).subscribe({
+      this.agregateurService.deleteAgregateur(agg.id, this.isAdmin()).subscribe({
         next: () => {
           this.aggregators.update(list => list.filter(a => a.id !== agg.id));
         },
@@ -152,6 +157,20 @@ export class AggregatorsComponent implements OnInit {
         }
       });
     }
+  }
+
+  toggleAggregatorEnabled(agg: Agregateur) {
+    if (!agg.id) return;
+    const next = !(agg.enabled ?? true);
+    this.agregateurService.setAgregateurEnabled(agg.id, next, this.isAdmin()).subscribe({
+      next: (updated) => {
+        this.aggregators.update(list => list.map(a => a.id === updated.id ? updated : a));
+      },
+      error: (err) => {
+        console.error('Erreur lors du changement de statut de l\'agrégateur', err);
+        alert('Erreur lors du changement de statut');
+      }
+    });
   }
 
   getOperatorIcon(operator: string): string {
@@ -165,4 +184,3 @@ export class AggregatorsComponent implements OnInit {
     return 'account_balance_wallet';
   }
 }
-

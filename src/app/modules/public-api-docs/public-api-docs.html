@@ -1,0 +1,81 @@
+<main class="docs-page">
+    <nav class="docs-nav">
+        <strong>FidelityPay API</strong>
+        <div>
+            <a routerLink="/login">Connexion</a>
+            <a routerLink="/register">Créer un compte</a>
+        </div>
+    </nav>
+
+    <section class="docs-hero">
+        <p class="fp-eyebrow">Pay-in API</p>
+        <h1>Encaisser un paiement mobile money</h1>
+        <p>Créez une clé API dans le dashboard, initiez le paiement depuis votre serveur, puis attendez le webhook marchand. Le paiement n'est pas synchrone.</p>
+    </section>
+
+    <section class="docs-grid">
+        <article class="docs-card">
+            <h2>1. Authentification</h2>
+            <p>Chaque appel marchand utilise ces headers. Ne mettez jamais la secret key dans le navigateur.</p>
+            <pre><code>X-API-Public-Key: pk_live_xxx
+X-API-Secret-Key: sk_live_xxx
+Idempotency-Key: order-1001</code></pre>
+        </article>
+
+        <article class="docs-card">
+            <h2>2. Statuts utiles</h2>
+            <ul>
+                <li><strong>PENDING</strong>: paiement créé, attente opérateur/client.</li>
+                <li><strong>REQUIRES_ACTION</strong>: envoyez l'OTP via l'endpoint OTP.</li>
+                <li><strong>SUCCESS</strong>: paiement confirmé.</li>
+                <li><strong>FAILED/CANCELLED</strong>: paiement terminé sans succès.</li>
+                <li><strong>PENDING_RECONCILIATION</strong>: résultat fournisseur incertain, FidelityPay réconcilie.</li>
+            </ul>
+        </article>
+    </section>
+
+    <section class="docs-section">
+        <div class="docs-section-header">
+            <div>
+                <h2>Initier un paiement</h2>
+                <p>Réponse typique: <code>paymentId</code>, <code>status</code>, <code>paymentUrl</code> si redirection requise.</p>
+            </div>
+            <button type="button" (click)="copy(initiateCurl)">Copier</button>
+        </div>
+        <pre><code>{{ initiateCurl }}</code></pre>
+    </section>
+
+    <section class="docs-section">
+        <div class="docs-section-header">
+            <div>
+                <h2>Lire le statut</h2>
+                <p>Utilisez cet appel pour afficher l'état côté back-office marchand.</p>
+            </div>
+            <button type="button" (click)="copy(statusCurl)">Copier</button>
+        </div>
+        <pre><code>{{ statusCurl }}</code></pre>
+    </section>
+
+    <section class="docs-section">
+        <div class="docs-section-header">
+            <div>
+                <h2>Envoyer un OTP</h2>
+                <p>Uniquement si le paiement retourne <code>REQUIRES_ACTION</code> avec <code>nextAction.type = SUBMIT_OTP</code>.</p>
+            </div>
+            <button type="button" (click)="copy(otpCurl)">Copier</button>
+        </div>
+        <pre><code>{{ otpCurl }}</code></pre>
+    </section>
+
+    <section class="docs-grid">
+        <article class="docs-card">
+            <h2>Webhooks marchands</h2>
+            <p>Configurez votre endpoint dans le dashboard. FidelityPay envoie les événements <code>payment.success</code>, <code>payment.failed</code>, <code>payment.cancelled</code> et <code>payment.requires_action</code>.</p>
+        </article>
+
+        <article class="docs-card">
+            <h2>Pays/opérateurs pay-in</h2>
+            <p>BJ: MTN, Moov, Celtiis. CI: MTN, Moov, Orange, Wave. TG: Moov, Mixx By Yas. SN: Orange, Mixx By Yas, Wave. NE: Airtel.</p>
+        </article>
+    </section>
+</main>

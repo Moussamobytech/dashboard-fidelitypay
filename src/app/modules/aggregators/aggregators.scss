@@ -69,6 +69,25 @@
 }
 
 /* Buttons */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 0.25rem 0.65rem;
+
+    &.active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    &.inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+}
+
 .btn {
     display: inline-flex;
     align-items: center;
@@ -916,5 +935,4 @@
         padding: 1.5rem;
     }
 }
-
 

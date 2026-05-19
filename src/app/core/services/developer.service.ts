@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { AuthService } from './auth.service';
 import { DEVELOPER_KEYS_API, ADMIN_DEVELOPERS_API } from './api.config';
 
 export interface ApiKey {
@@ -16,9 +15,26 @@ export interface ApiKey {
     lastUsedAt?: string;
     lastUsedIp?: string;
     expiresAt?: string;
-    metadata?: any;
     userFullName?: string;
     userEmail?: string;
+}
+
+export interface WebhookEndpoint {
+    id: string;
+    url: string;
+    event: string;
+    description?: string;
+    isActive: boolean;
+    lastTriggeredAt?: string;
+    lastStatusCode?: number;
+    failureCount: number;
+    createdAt: string;
+}
+
+export interface CreateWebhookRequest {
+    url: string;
+    event: string;
+    description?: string;
 }
 
 @Injectable({
@@ -26,7 +42,6 @@ export interface ApiKey {
 })
 export class DeveloperService {
     private http = inject(HttpClient);
-    private authService = inject(AuthService);
     private apiUrl = DEVELOPER_KEYS_API;
     private adminUrl = ADMIN_DEVELOPERS_API;
 
@@ -37,8 +52,7 @@ export class DeveloperService {
     }
 
     private getHeaders() {
-        const userId = this.authService.currentUser()?.userId || 'demo-user';
-        return { 'X-User-Id': userId };
+        return {};
     }
 
     private loadKeys() {
@@ -55,16 +69,15 @@ export class DeveloperService {
         return this.keysSubject.asObservable();
     }
 
+    createKey(name: string, environment: 'sandbox' | 'live'): Observable<ApiKey> {
+        const request = { name, environment };
+        return this.http.post<ApiKey>(this.apiUrl, request, { headers: this.getHeaders() });
+    }
+
     generateKey(name: string, environment: 'sandbox' | 'live'): void {
-        const request = { name, environment, metadata: 'Created via Dashboard' };
-        this.http.post<ApiKey>(this.apiUrl, request, { headers: this.getHeaders() }).subscribe({
-            next: (newKey) => {
-                const currentKeys = this.keysSubject.getValue();
-                this.keysSubject.next([...currentKeys, newKey]);
-            },
-            error: (err) => {
-                console.error('Failed to generate key:', err);
-            }
+        this.createKey(name, environment).subscribe({
+            next: (newKey) => this.addKeyToState(newKey),
+            error: (err) => console.error('Failed to generate key:', err)
         });
     }
 
@@ -95,6 +108,11 @@ export class DeveloperService {
         this.revokeKey(id);
     }
 
+    addKeyToState(newKey: ApiKey): void {
+        const currentKeys = this.keysSubject.getValue();
+        this.keysSubject.next([...currentKeys, newKey]);
+    }
+
     // =========================================================================
     // ADMIN METHODS
     // =========================================================================
@@ -109,5 +127,31 @@ export class DeveloperService {
 
     adminDeleteKey(id: string): Observable<any> {
         return this.http.delete(`${this.adminUrl}/keys/${id}`);
+    }
+
+    getWebhooks(event?: string): Observable<WebhookEndpoint[]> {
+        const params = event ? { event } : undefined;
+        return this.http.get<WebhookEndpoint[]>(`${this.apiUrl.replace('/keys', '/webhooks')}`, {
+            headers: this.getHeaders(),
+            params
+        });
+    }
+
+    createWebhook(request: CreateWebhookRequest): Observable<WebhookEndpoint> {
+        return this.http.post<WebhookEndpoint>(`${this.apiUrl.replace('/keys', '/webhooks')}`, request, {
+            headers: this.getHeaders()
+        });
+    }
+
+    deleteWebhook(id: string): Observable<any> {
+        return this.http.delete(`${this.apiUrl.replace('/keys', '/webhooks')}/${id}`, {
+            headers: this.getHeaders()
+        });
+    }
+
+    setWebhookActive(id: string, isActive: boolean): Observable<WebhookEndpoint> {
+        return this.http.patch<WebhookEndpoint>(`${this.apiUrl.replace('/keys', '/webhooks')}/${id}`, { isActive }, {
+            headers: this.getHeaders()
+        });
     }
 }
