@@ -7,7 +7,12 @@ export const AUTH_API_BASE = `${API_V1_ROOT}/auth`;
 export const ADMIN_USERS_API = `${API_V1_ROOT}/admin/users`;
 export const DEVELOPER_KEYS_API = `${API_V1_ROOT}/developer/keys`;
 export const ADMIN_DEVELOPERS_API = `${API_V1_ROOT}/admin/developers`;
-export const DEVELOPER_AGREGATEURS_API = `${API_V1_ROOT}/developer/agregateurs`;
+export const DEVELOPER_PAYMENT_ROUTES_API = `${API_V1_ROOT}/developer/payment-routes`;
+export const ADMIN_PAYMENT_ROUTES_API = `${API_V1_ROOT}/admin/payment-routes`;
 export const PAYMENT_API = API_ROOT;
 export const MONITORING_API = `${API_ROOT}/monitoring`;
-export const ADMIN_AGREGATEURS_API = `${API_V1_ROOT}/admin/agregateurs`;
+
+export const ADMIN_PAYMENT_PROVIDERS_API = `${API_V1_ROOT}/admin/payment-providers`;
+export const DEVELOPER_PAYMENT_PROVIDERS_API = `${API_V1_ROOT}/developer/payment-providers`;
+export const DEVELOPER_PROVIDER_ACCOUNTS_API = `${API_V1_ROOT}/developer/provider-accounts`;
+export const ADMIN_PAYMENT_PROVIDER_ROUTES_API = `${API_V1_ROOT}/admin/payment-provider-routes`;

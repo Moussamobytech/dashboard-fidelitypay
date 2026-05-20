@@ -15,7 +15,7 @@
         </div>
         <button class="btn btn-primary" (click)="toggleAddForm()">
             <span class="material-icons-outlined">add</span>
-            Ajouter un Agrégateur
+            {{ isAdmin() ? 'Ajouter un agrégateur supporté' : 'Activer un agrégateur' }}
         </button>
     </div>
 </div>
@@ -26,7 +26,7 @@
         <div class="modal-header">
             <div class="modal-title">
                 <span class="material-icons-outlined">{{ editingAggregator() ? 'edit' : 'add_box' }}</span>
-                <h2>{{ editingAggregator() ? 'Modifier l\'Agrégateur' : 'Nouvel Agrégateur' }}</h2>
+                <h2>{{ editingAggregator() ? (isAdmin() ? 'Modifier l\'agrégateur supporté' : 'Modifier mes identifiants') : (isAdmin() ? 'Nouvel agrégateur supporté' : 'Activer un agrégateur') }}</h2>
             </div>
             <button class="close-btn" (click)="editingAggregator() ? cancelEdit() : toggleAddForm()">
                 <span class="material-icons-outlined">close</span>
@@ -35,74 +35,101 @@
         
         <div class="modal-body">
             <div class="form-grid">
-                <div class="form-group">
-                    <label for="nomA">Nom de l'Agrégateur</label>
+                <div class="form-group" *ngIf="isAdmin(); else merchantProviderSelect">
+                    <label for="nomA">Code de l'agrégateur supporté</label>
                     <div class="input-wrapper">
                         <span class="material-icons-outlined">business</span>
-                        <input type="text" id="nomA" [(ngModel)]="(editingAggregator() || newAggregator()).nomA" placeholder="Ex: Kkiapay, PayDunya...">
+                        <input type="text" id="nomA" [(ngModel)]="(editingAggregator() || newAggregator()).nomA" placeholder="Ex: KKIAPAY, PAYDUNYA...">
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="nompays">Pays</label>
-                    <div class="input-wrapper">
-                        <span class="material-icons-outlined">public</span>
-                        <input type="text" id="nompays" [(ngModel)]="(editingAggregator() || newAggregator()).nompays" placeholder="Ex: Bénin, Sénégal...">
-                    </div>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="nomOperateur">Opérateurs couverts</label>
-                    <div class="operators-input-group">
-                        <div class="input-wrapper">
-                            <span class="material-icons-outlined">router</span>
-                            <input type="text" id="nomOperateur" 
-                                   [(ngModel)]="currentOperatorInput" 
-                                   (keyup.enter)="addOperator($event)"
-                                   placeholder="Tapez un opérateur et appuyez sur Entrée (Ex: Orange, MTN...)">
+                <ng-template #merchantProviderSelect>
+                    <div class="form-group">
+                        <label for="providerSelect">Agrégateur</label>
+                        <div class="input-wrapper select-wrapper">
+                            <span class="material-icons-outlined">business</span>
+                            <select id="providerSelect" [ngModel]="(editingAggregator() || newAggregator()).nomA"
+                                    (ngModelChange)="setMerchantProvider($event)">
+                                <option value="" disabled>Sélectionnez un agrégateur</option>
+                                @for (provider of supportedProviderNames(); track provider) {
+                                    <option [value]="provider">{{ provider }}</option>
+                                }
+                            </select>
                         </div>
-                        <button class="btn btn-primary mini-add" (click)="addOperator($event)">
+                    </div>
+                </ng-template>
+
+                <div class="form-group full-width coverage-builder" *ngIf="isAdmin()">
+                    <div class="coverage-heading">
+                        <label>Pays et opérateurs couverts</label>
+                        <button type="button" class="btn btn-outline btn-small" (click)="addCountryConfig()">
                             <span class="material-icons-outlined">add</span>
+                            Ajouter un pays
                         </button>
                     </div>
-                    <div class="operator-tags-container">
-                        @for (op of operatorsList; track op) {
-                            <span class="op-tag">
-                                {{ op }}
-                                <button (click)="removeOperator(op)">
-                                    <span class="material-icons-outlined">close</span>
-                                </button>
-                            </span>
-                        }
-                        @if (operatorsList.length === 0) {
-                            <p class="helper-text">Ajoutez au moins un opérateur</p>
-                        }
-                    </div>
+
+                    @for (config of countryConfigsFor(editingAggregator() || newAggregator()); track $index) {
+                        <div class="coverage-row">
+                            <div class="input-wrapper select-wrapper">
+                                <span class="material-icons-outlined">public</span>
+                                <select [(ngModel)]="config.countryName" [ngModelOptions]="{standalone: true}">
+                                    <option value="" disabled>Sélectionnez un pays</option>
+                                    @for (country of westAfricanCountries; track country) {
+                                        <option [value]="country">{{ country }}</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="operator-chip-field">
+                                <div class="operator-chip-input">
+                                    @for (op of operatorList(config); track op) {
+                                        <span class="op-tag">
+                                            {{ op }}
+                                            <button type="button" (click)="removeOperatorFromConfig(config, op)">
+                                                <span class="material-icons-outlined">close</span>
+                                            </button>
+                                        </span>
+                                    }
+                                    <input type="text"
+                                           [(ngModel)]="config.operatorDraft"
+                                           [ngModelOptions]="{standalone: true}"
+                                           (keydown)="handleOperatorKeydown($event, config)"
+                                           (input)="handleOperatorInput(config)"
+                                           (blur)="commitOperator(config)"
+                                           placeholder="Tapez un opérateur puis virgule">
+                                </div>
+                            </div>
+                            <button type="button" class="action-btn delete" (click)="removeCountryConfig($index)" title="Retirer ce pays">
+                                <span class="material-icons-outlined">delete_outline</span>
+                            </button>
+                        </div>
+                    }
                 </div>
 
-                <div class="form-group">
-                    <label for="cleApblic">Clé Publique</label>
-                    <div class="input-wrapper">
-                        <span class="material-icons-outlined">vpn_key</span>
-                        <input type="text" id="cleApblic" [(ngModel)]="(editingAggregator() || newAggregator()).cleApblic" placeholder="pk_live_...">
+                <ng-container *ngIf="!isAdmin()">
+                    <div class="form-group">
+                        <label for="cleApblic">Clé Publique / Master Key</label>
+                        <div class="input-wrapper">
+                            <span class="material-icons-outlined">vpn_key</span>
+                            <input type="text" id="cleApblic" [(ngModel)]="(editingAggregator() || newAggregator()).cleApblic" placeholder="pk_live_...">
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="cleApr">Clé Privée (Secret)</label>
-                    <div class="input-wrapper">
-                        <span class="material-icons-outlined">lock</span>
-                        <input type="password" id="cleApr" [(ngModel)]="(editingAggregator() || newAggregator()).cleApr" placeholder="sk_live_...">
+                    <div class="form-group">
+                        <label for="cleApr">Clé Privée (Secret)</label>
+                        <div class="input-wrapper">
+                            <span class="material-icons-outlined">lock</span>
+                            <input type="password" id="cleApr" [(ngModel)]="(editingAggregator() || newAggregator()).cleApr" placeholder="sk_live_...">
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-group full-width">
-                    <label for="cleAtoken">Token d'accès</label>
-                    <div class="input-wrapper">
-                        <span class="material-icons-outlined">token</span>
-                        <input type="text" id="cleAtoken" [(ngModel)]="(editingAggregator() || newAggregator()).cleAtoken" placeholder="Bearer ...">
+                    <div class="form-group full-width">
+                        <label for="cleAtoken">Token d'accès</label>
+                        <div class="input-wrapper">
+                            <span class="material-icons-outlined">token</span>
+                            <input type="text" id="cleAtoken" [(ngModel)]="(editingAggregator() || newAggregator()).cleAtoken" placeholder="Bearer ...">
+                        </div>
                     </div>
-                </div>
+                </ng-container>
             </div>
         </div>
 
@@ -110,7 +137,7 @@
             <button class="btn btn-outline" (click)="editingAggregator() ? cancelEdit() : resetForm()">
                 {{ editingAggregator() ? 'Annuler' : 'Effacer' }}
             </button>
-            <button class="btn btn-primary" (click)="editingAggregator() ? saveEdit() : addAggregator()" [disabled]="!(editingAggregator() || newAggregator()).nomA">
+            <button class="btn btn-primary" (click)="editingAggregator() ? saveEdit() : addAggregator()" [disabled]="!canSaveCurrent()">
                 <span class="material-icons-outlined">save</span>
                 {{ editingAggregator() ? 'Mettre à jour' : 'Enregistrer' }}
             </button>
@@ -146,43 +173,47 @@
                         </span>
                     </div>
                 </div>
-                
-                <div class="detail-item">
-                    <label>Pays</label>
+                <div class="detail-item" *ngIf="isAdmin()">
+                    <label>Code plateforme</label>
                     <div class="detail-value">
-                        <span class="material-icons-outlined">public</span>
-                        {{ agg.nompays }}
+                        <span class="material-icons-outlined">code</span>
+                        {{ agg.providerCode || agg.nomA }}
                     </div>
                 </div>
 
-                <div class="detail-item">
-                    <label>Opérateurs couverts</label>
-                    <div class="detail-tags">
-                        @for (op of agg.nomOperateur.split(','); track op) {
-                            @if (op.trim()) {
-                                <span class="tag tag-operator">{{ op.trim() }}</span>
-                            }
-                        }
+                <div class="detail-item" *ngIf="!isAdmin()">
+                    <label>Environnement</label>
+                    <div class="detail-value">
+                        <span class="material-icons-outlined">settings_input_component</span>
+                        {{ agg.environment || 'LIVE' }}
                     </div>
                 </div>
-
-                <div class="detail-item full">
-                    <label>Clé Publique</label>
-                    <div class="detail-value code">{{ agg.cleApblic }}</div>
-                </div>
-
-                <div class="detail-item full">
-                    <label>Clé Privée (Secret)</label>
-                    <div class="detail-value code private">
-                        <span class="material-icons-outlined">lock</span>
-                        ••••••••••••••••••••••••••••••••
+                <ng-container *ngIf="!isAdmin(); else adminSchemaDetails">
+                    <div class="detail-item full">
+                        <label>Clé Publique / Master Key</label>
+                        <div class="detail-value code">{{ agg.cleApblic || 'Configuré' }}</div>
                     </div>
-                </div>
 
-                <div class="detail-item full">
-                    <label>Token d'accès</label>
-                    <div class="detail-value code">{{ agg.cleAtoken || 'Aucun token configuré' }}</div>
-                </div>
+                    <div class="detail-item full">
+                        <label>Clé Privée (Secret)</label>
+                        <div class="detail-value code private">
+                            <span class="material-icons-outlined">lock</span>
+                            ••••••••••••••••••••••••••••••••
+                        </div>
+                    </div>
+
+                    <div class="detail-item full">
+                        <label>Token d'accès</label>
+                        <div class="detail-value code">{{ agg.cleAtoken || 'Configuré' }}</div>
+                    </div>
+                </ng-container>
+
+                <ng-template #adminSchemaDetails>
+                    <div class="detail-item full">
+                        <label>Schéma d'identifiants attendu des marchands</label>
+                        <div class="detail-value code">{{ agg.credentialSchema || 'Schéma par défaut' }}</div>
+                    </div>
+                </ng-template>
             </div>
         </div>
 
@@ -191,6 +222,56 @@
         </div>
     </div>
 </div>
+
+
+<section class="card transactions-card route-settings-card">
+    <div class="card-header">
+        <div>
+            <h3>{{ isAdmin() ? 'Routes de paiement plateforme' : 'Routes de paiement disponibles' }}</h3>
+            <p class="subtitle">{{ isAdmin() ? 'Activez ou désactivez une route globalement.' : 'Activez ou désactivez uniquement les routes pays/opérateur que vous voulez utiliser.' }}</p>
+        </div>
+        <span class="badge-count">{{ paymentRoutes().length }} routes</span>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Provider</th>
+                    <th>Pays</th>
+                    <th>Opérateur</th>
+                    <th>Flux</th>
+                    <th>Canal</th>
+                    <th>Statut</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let route of paymentRoutes()">
+                    <td><strong>{{ route.providerCode }}</strong></td>
+                    <td>{{ route.country }}</td>
+                    <td>{{ route.operator }}</td>
+                    <td><code class="key-badge">{{ route.flowType }}</code></td>
+                    <td>{{ route.providerChannel }}</td>
+                    <td>
+                        <span class="status-badge" [class.active]="route.effectiveEnabled" [class.inactive]="!route.effectiveEnabled">
+                            {{ route.effectiveEnabled ? 'Active' : 'Inactive' }}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="action-btn" [class.delete]="route.effectiveEnabled" [class.view]="!route.effectiveEnabled"
+                            (click)="togglePaymentRoute(route)"
+                            [title]="route.effectiveEnabled ? 'Désactiver cette route' : 'Activer cette route'">
+                            <span class="material-icons-outlined">{{ route.effectiveEnabled ? 'toggle_on' : 'toggle_off' }}</span>
+                        </button>
+                    </td>
+                </tr>
+                <tr *ngIf="paymentRoutes().length === 0">
+                    <td colspan="7" class="empty-state">Aucune route disponible.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
 
 <div class="content-area">
     <!-- LIST VIEW -->
@@ -204,9 +285,8 @@
                 <thead>
                     <tr>
                         <th>Nom</th>
-                        <th>Pays</th>
-                        <th>Opérateur</th>
-                        <th>Clé Publique</th>
+                        <th>{{ isAdmin() ? 'Code' : 'Identifiants' }}</th>
+                        <th *ngIf="!isAdmin()">Environnement</th>
                         <th>Statut</th>
                         <th>Actions</th>
                     </tr>
@@ -222,27 +302,13 @@
                             </div>
                         </td>
                         <td>
-                            <div class="country-cell">
-                                <span class="material-icons-outlined">location_on</span>
-                                {{ agg.nompays }}
-                            </div>
+                            <code class="key-badge" *ngIf="isAdmin(); else merchantCredentialHint">{{ agg.providerCode || agg.nomA }}</code>
+                            <ng-template #merchantCredentialHint>
+                                <code class="key-badge">{{ agg.cleApblic || 'Configuré' }}</code>
+                            </ng-template>
                         </td>
-                        <td>
-                            <div class="operators-stack">
-                                @for (op of agg.nomOperateur.split(','); track op) {
-                                    @if (op.trim()) {
-                                        <div class="operator-cell">
-                                            <span class="operator-icon" [attr.data-operator]="op.trim().toUpperCase()">
-                                                <span class="material-icons-outlined">{{ getOperatorIcon(op.trim()) }}</span>
-                                            </span>
-                                            <span class="operator-name">{{ op.trim() }}</span>
-                                        </div>
-                                    }
-                                }
-                            </div>
-                        </td>
-                        <td>
-                            <code class="key-badge">{{ agg.cleApblic | slice:0:12 }}...</code>
+                        <td *ngIf="!isAdmin()">
+                            <code class="key-badge">{{ agg.environment || 'LIVE' }}</code>
                         </td>
                         <td>
                             <span class="status-badge" [class.active]="agg.enabled !== false" [class.inactive]="agg.enabled === false">
@@ -269,7 +335,7 @@
                         </td>
                     </tr>
                     <tr *ngIf="aggregators().length === 0">
-                        <td colspan="6" class="empty-state">
+                        <td [attr.colspan]="isAdmin() ? 4 : 5" class="empty-state">
                             <span class="material-icons-outlined">info</span>
                             Aucun agrégateur configuré
                         </td>
@@ -285,12 +351,10 @@
             <div class="card-glow"></div>
             <div class="card-top">
                 <div class="operators-badge-group">
-                    @for (op of agg.nomOperateur.split(','); track op) {
-                        @if (op.trim()) {
-                            <div class="operator-icon-mini" [attr.data-operator]="op.trim().toUpperCase()" [title]="op.trim()">
-                                <span class="material-icons-outlined">{{ getOperatorIcon(op.trim()) }}</span>
-                            </div>
-                        }
+                    @for (op of displayOperators(agg); track op) {
+                        <div class="operator-icon-mini" [attr.data-operator]="op.toUpperCase()" [title]="op">
+                            <span class="material-icons-outlined">{{ getOperatorIcon(op) }}</span>
+                        </div>
                     }
                 </div>
                 <div class="card-actions">
@@ -309,24 +373,25 @@
                 <span class="status-badge" [class.active]="agg.enabled !== false" [class.inactive]="agg.enabled === false">
                     {{ agg.enabled !== false ? 'Activé' : 'Désactivé' }}
                 </span>
-                <div class="card-tags">
+                <div class="card-tags" *ngIf="!isAdmin(); else adminProviderCode">
                     <span class="tag tag-country">
-                        <span class="material-icons-outlined">public</span>
-                        {{ agg.nompays }}
+                        <span class="material-icons-outlined">settings_input_component</span>
+                        {{ agg.environment || 'LIVE' }}
                     </span>
-                    <div class="operators-tags">
-                        @for (op of agg.nomOperateur.split(','); track op) {
-                            @if (op.trim()) {
-                                <span class="tag tag-operator">{{ op.trim() }}</span>
-                            }
-                        }
-                    </div>
                 </div>
+                <ng-template #adminProviderCode>
+                    <div class="card-tags">
+                        <span class="tag tag-country">
+                            <span class="material-icons-outlined">code</span>
+                            {{ agg.providerCode || agg.nomA }}
+                        </span>
+                    </div>
+                </ng-template>
             </div>
-            <div class="card-footer">
+            <div class="card-footer" *ngIf="!isAdmin()">
                 <div class="key-preview">
-                    <span class="label">Public Key</span>
-                    <span class="value">{{ agg.cleApblic | slice:0:20 }}...</span>
+                    <span class="label">Identifiants</span>
+                    <span class="value">{{ agg.cleApblic || 'Configuré' }}</span>
                 </div>
             </div>
         </div>
