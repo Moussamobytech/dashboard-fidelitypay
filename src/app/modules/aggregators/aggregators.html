@@ -3,13 +3,15 @@
         <h1>Gestion des Agrégateurs</h1>
         <p class="subtitle">{{ isAdmin() ? 'Configurez les partenaires de paiement de la plateforme.' : 'Ajoutez vos agrégateurs et activez uniquement ceux que votre serveur doit utiliser.' }}</p>
     </div>
-    
+
     <div class="header-actions">
         <div class="view-switcher-group">
-            <button class="switcher-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')" title="Vue Liste">
+            <button class="switcher-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')"
+                title="Vue Liste">
                 <span class="material-icons-outlined">view_list</span>
             </button>
-            <button class="switcher-btn" [class.active]="viewMode() === 'grid'" (click)="viewMode.set('grid')" title="Vue Grille">
+            <button class="switcher-btn" [class.active]="viewMode() === 'grid'" (click)="viewMode.set('grid')"
+                title="Vue Grille">
                 <span class="material-icons-outlined">grid_view</span>
             </button>
         </div>
@@ -21,7 +23,8 @@
 </div>
 
 <!-- Modal for Add/Edit Aggregator -->
-<div class="modal-overlay" *ngIf="showAddForm() || editingAggregator()" (click)="editingAggregator() ? cancelEdit() : toggleAddForm()">
+<div class="modal-overlay" *ngIf="showAddForm() || editingAggregator()"
+    (click)="editingAggregator() ? cancelEdit() : toggleAddForm()">
     <div class="modal-container" (click)="$event.stopPropagation()">
         <div class="modal-header">
             <div class="modal-title">
@@ -32,7 +35,7 @@
                 <span class="material-icons-outlined">close</span>
             </button>
         </div>
-        
+
         <div class="modal-body">
             <div class="form-grid">
                 <div class="form-group" *ngIf="isAdmin(); else merchantProviderSelect">
@@ -157,16 +160,11 @@
                 <span class="material-icons-outlined">close</span>
             </button>
         </div>
-        
+
         <div class="modal-body" *ngIf="viewingAggregator() as agg">
             <div class="details-grid">
                 <div class="detail-item full">
-                    <label>Nom de l'Agrégateur</label>
                     <div class="detail-value highlight">{{ agg.nomA }}</div>
-                </div>
-
-                <div class="detail-item">
-                    <label>Statut</label>
                     <div class="detail-value">
                         <span class="status-badge" [class.active]="agg.enabled !== false" [class.inactive]="agg.enabled === false">
                             {{ agg.enabled !== false ? 'Activé' : 'Désactivé' }}
@@ -218,7 +216,11 @@
         </div>
 
         <div class="modal-footer">
-            <button class="btn btn-primary" (click)="viewingAggregator.set(null)">Fermer</button>
+            <button class="btn btn-outline" (click)="viewingAggregator.set(null)">Fermer</button>
+            <button class="btn btn-primary" (click)="startEdit(viewingAggregator()!, 0); viewingAggregator.set(null)">
+                <span class="material-icons-outlined">edit</span>
+                Modifier
+            </button>
         </div>
     </div>
 </div>
@@ -292,12 +294,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let agg of aggregators(); let i = index">
+                    @for (agg of aggregators(); track agg.id; let i = $index) {
+                    <tr>
                         <td>
                             <div class="name-cell">
-                                <div class="avatar-icon">
-                                    {{ agg.nomA.charAt(0) }}
-                                </div>
+                                <div class="avatar-icon">{{ (agg.nomA || '').trim().charAt(0) | uppercase }}</div>
                                 <span class="font-bold">{{ agg.nomA }}</span>
                             </div>
                         </td>
@@ -340,6 +341,7 @@
                             Aucun agrégateur configuré
                         </td>
                     </tr>
+                  }
                 </tbody>
             </table>
         </div>

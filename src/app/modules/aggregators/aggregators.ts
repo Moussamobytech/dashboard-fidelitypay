@@ -30,26 +30,23 @@ export class AggregatorsComponent implements OnInit {
   newAggregator = signal<Agregateur>(this.emptyAggregator());
 
   readonly westAfricanCountries = [
-    'Benin',
-    'Burkina Faso',
-    'Cape Verde',
-    'Cote d\'Ivoire',
-    'Gambia',
-    'Ghana',
-    'Guinea',
-    'Guinea-Bissau',
-    'Liberia',
-    'Mali',
-    'Mauritania',
-    'Niger',
-    'Nigeria',
-    'Senegal',
-    'Sierra Leone',
-    'Togo'
+    'Bénin', 'Burkina Faso', 'Cameroun',
+    'Côte d\'Ivoire', 'Niger',
+    'Guinée', 'Mali', 'Sénégal', 'Togo'
   ];
 
   readonly defaultSupportedProviders = ['KKIAPAY', 'PAYDUNYA'];
 
+  getOperatorsList(operators: string): string[] {
+    return operators ? operators.split(',').map(s => s.trim()).filter(s => s) : [];
+  }
+
+  getTotalOperators(agg: Agregateur): number {
+    if (!agg.countryConfigs) return 0;
+    return agg.countryConfigs.reduce((acc, config) => acc + this.getOperatorsList(config.operators).length, 0);
+  }
+
+  // Lifecycle & API
   ngOnInit() {
     this.loadSupportedProviders();
     this.loadAggregators();
@@ -112,7 +109,7 @@ export class AggregatorsComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Erreur lors du chargement des agrégateurs', err);
+        console.error('Error loading aggregators', err);
         this.isLoading.set(false);
       }
     });
@@ -377,8 +374,6 @@ export class AggregatorsComponent implements OnInit {
     if (op.includes('MTN')) return 'cell_tower';
     if (op.includes('MOOV')) return 'tap_and_play';
     if (op.includes('WAVE')) return 'waves';
-    if (op.includes('PAYPAL')) return 'payment';
-    if (op.includes('STRIPE')) return 'credit_card';
     return 'account_balance_wallet';
   }
 

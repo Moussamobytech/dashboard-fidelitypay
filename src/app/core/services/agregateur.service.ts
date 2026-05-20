@@ -10,11 +10,18 @@ import {
   DEVELOPER_PAYMENT_ROUTES_API
 } from './api.config';
 
+export interface CountryConfig {
+  id?: number;
+  countryName: string;
+  operators: string;
+}
+
 export interface Agregateur {
   id?: number;
   nomA: string;
   cleApblic: string;
   cleApr: string;
+  cleAmaster?: string;
   cleAtoken: string;
   nompays: string;
   nomOperateur: string;

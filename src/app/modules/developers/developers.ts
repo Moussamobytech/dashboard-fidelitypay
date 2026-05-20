@@ -6,6 +6,7 @@ import { DeveloperService, ApiKey } from '../../core/services/developer.service'
 import { PaymentService } from '../../core/services/payment.service';
 import { Payment, PaymentStatus } from '../../core/models/payment.model';
 import { AuthService } from '../../core/services/auth.service';
+import { AgregateurService, Agregateur } from '../../core/services/agregateur.service';
 
 @Component({
     selector: 'app-developers',
@@ -18,6 +19,7 @@ export class DevelopersComponent implements OnInit {
     private developerService = inject(DeveloperService);
     private paymentService = inject(PaymentService);
     private authService = inject(AuthService);
+    private agregateurService = inject(AgregateurService);
 
     currentEnvironment: 'sandbox' | 'live' = 'sandbox';
     newKeyName = '';
@@ -26,6 +28,7 @@ export class DevelopersComponent implements OnInit {
     createdKey = signal<ApiKey | null>(null);
     allKeys = signal<ApiKey[]>([]);
     filteredKeys = signal<ApiKey[]>([]);
+    availableAggregators = signal<Agregateur[]>([]);
     Math = Math;
 
     // Pagination
@@ -84,6 +87,14 @@ export class DevelopersComponent implements OnInit {
         });
 
         this.loadTransactionStats();
+        this.loadAvailableAggregators();
+    }
+
+    loadAvailableAggregators(): void {
+        this.agregateurService.getAllAgregateurs().subscribe({
+            next: (aggs) => this.availableAggregators.set(aggs),
+            error: (err) => console.error('Error loading aggregators for docs:', err)
+        });
     }
 
     loadTransactionStats(): void {
