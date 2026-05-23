@@ -125,14 +125,26 @@ export class AggregatorsComponent implements OnInit {
   togglePaymentRoute(route: PaymentRouteSetting) {
     const next = this.isAdmin() ? !route.platformEnabled : !(route.merchantEnabled ?? true);
     this.agregateurService.setPaymentRouteEnabled(route.routeId, next, this.isAdmin()).subscribe({
-      next: (updated) => {
-        this.paymentRoutes.update(list => list.map(r => r.routeId === updated.routeId ? updated : r));
-      },
+      next: (updated) => this.updatePaymentRoute(updated),
       error: (err) => {
         console.error('Erreur lors du changement de statut de la route', err);
         alert('Erreur lors du changement de statut de la route');
       }
     });
+  }
+
+  updatePaymentRoutePriority(route: PaymentRouteSetting, value: string) {
+    if (this.isAdmin()) return;
+    const priority = value.trim() === '' ? null : Number(value);
+    if (priority !== null && (!Number.isInteger(priority) || priority < 0)) return;
+    this.agregateurService.setPaymentRoutePriority(route.routeId, priority).subscribe({
+      next: (updated) => this.updatePaymentRoute(updated),
+      error: (err) => console.error('Erreur lors du changement de priorite de la route', err)
+    });
+  }
+
+  private updatePaymentRoute(updated: PaymentRouteSetting) {
+    this.paymentRoutes.update(list => list.map(r => r.routeId === updated.routeId ? updated : r));
   }
 
   toggleAddForm() {
@@ -389,7 +401,6 @@ export class AggregatorsComponent implements OnInit {
           environment: 'LIVE',
           providerChannel: `${operator.toLowerCase()}-${this.countryCode(config.countryName).toLowerCase()}`,
           enabled: true,
-          observedUp: true,
           priority: 100
         }).subscribe({ error: err => console.error('Erreur lors de la création de route', err) });
       });

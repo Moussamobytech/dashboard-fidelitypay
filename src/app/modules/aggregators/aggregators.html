@@ -243,6 +243,9 @@
                     <th>Opérateur</th>
                     <th>Flux</th>
                     <th>Canal</th>
+                    <th>Prix</th>
+                    <th>Priorite</th>
+                    <th>Score</th>
                     <th>Statut</th>
                     <th>Action</th>
                 </tr>
@@ -254,6 +257,17 @@
                     <td>{{ route.operator }}</td>
                     <td><code class="key-badge">{{ route.flowType }}</code></td>
                     <td>{{ route.providerChannel }}</td>
+                    <td>{{ route.cost | number:'1.0-2' }}</td>
+                    <td>
+                        <ng-container *ngIf="!isAdmin(); else platformPriority">
+                            <input class="route-priority-input" type="number" min="0"
+                                [value]="route.merchantPriority ?? route.priority"
+                                (change)="updatePaymentRoutePriority(route, $any($event.target).value)"
+                                [title]="'Priorite marchande; la priorite plateforme est ' + route.priority">
+                        </ng-container>
+                        <ng-template #platformPriority>{{ route.priority }}</ng-template>
+                    </td>
+                    <td>{{ route.selectionScore ?? 0 | number:'1.0-2' }}</td>
                     <td>
                         <span class="status-badge" [class.active]="route.effectiveEnabled" [class.inactive]="!route.effectiveEnabled">
                             {{ route.effectiveEnabled ? 'Active' : 'Inactive' }}
@@ -268,7 +282,7 @@
                     </td>
                 </tr>
                 <tr *ngIf="paymentRoutes().length === 0">
-                    <td colspan="7" class="empty-state">Aucune route disponible.</td>
+                    <td colspan="10" class="empty-state">Aucune route disponible.</td>
                 </tr>
             </tbody>
         </table>

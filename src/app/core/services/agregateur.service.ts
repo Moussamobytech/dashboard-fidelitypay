@@ -74,8 +74,13 @@ export interface PaymentRouteSetting {
   environment: string;
   providerChannel: string;
   priority: number;
+  merchantPriority?: number | null;
+  effectivePriority: number;
+  cost: number;
+  avgLatency: number;
+  failureRate: number;
+  selectionScore?: number | null;
   platformEnabled: boolean;
-  observedUp: boolean;
   merchantEnabled?: boolean | null;
   effectiveEnabled: boolean;
 }
@@ -131,5 +136,9 @@ export class AgregateurService {
   setPaymentRouteEnabled(routeId: number, enabled: boolean, admin = false): Observable<PaymentRouteSetting> {
     const baseUrl = admin ? ADMIN_PAYMENT_ROUTES_API : DEVELOPER_PAYMENT_ROUTES_API;
     return this.http.patch<PaymentRouteSetting>(`${baseUrl}/${routeId}/status`, { enabled });
+  }
+
+  setPaymentRoutePriority(routeId: number, priority: number | null): Observable<PaymentRouteSetting> {
+    return this.http.patch<PaymentRouteSetting>(`${DEVELOPER_PAYMENT_ROUTES_API}/${routeId}/priority`, { priority });
   }
 }
