@@ -103,6 +103,24 @@ export class AuthService {
         );
     }
 
+    forgotPassword(email: string): Observable<any> {
+        return this.http.post(`${API_BASE}/forgot-password`, { email }).pipe(
+            catchError(err => {
+                console.error('Erreur de réinitialisation de mot de passe:', err);
+                return throwError(() => err);
+            })
+        );
+    }
+
+    resetPassword(token: string, newPassword: string): Observable<any> {
+        return this.http.post(`${API_BASE}/reset-password`, { token, newPassword }).pipe(
+            catchError(err => {
+                console.error('Erreur de mise à jour du mot de passe:', err);
+                return throwError(() => err);
+            })
+        );
+    }
+
     logout(): void {
         localStorage.removeItem(STORAGE_KEY);
         this._currentUser.set(null);

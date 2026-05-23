@@ -20,6 +20,10 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/auth/forgot-password').then(m => m.ForgotPasswordComponent)
     },
     {
+        path: 'reset-password',
+        loadComponent: () => import('./modules/auth/reset-password').then(m => m.ResetPasswordComponent)
+    },
+    {
         path: '',
         component: MainLayoutComponent,
         children: [

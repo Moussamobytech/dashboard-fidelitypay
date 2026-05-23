@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
     selector: 'app-forgot-password',
@@ -13,6 +14,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 export class ForgotPasswordComponent {
     private fb = inject(FormBuilder);
     private router = inject(Router);
+    private authService = inject(AuthService);
 
     isLoading = signal(false);
     isSuccess = signal(false);
@@ -27,11 +29,18 @@ export class ForgotPasswordComponent {
             this.isLoading.set(true);
             this.errorMessage.set(null);
 
-            // Simule un appel backend pour l'envoi de l'email
-            setTimeout(() => {
-                this.isLoading.set(false);
-                this.isSuccess.set(true);
-            }, 1500);
+            const email = this.forgotForm.value.email!;
+
+            this.authService.forgotPassword(email).subscribe({
+                next: () => {
+                    this.isLoading.set(false);
+                    this.isSuccess.set(true);
+                },
+                error: (err) => {
+                    this.isLoading.set(false);
+                    this.errorMessage.set(err.error?.message || 'Une erreur est survenue lors de la demande de réinitialisation.');
+                }
+            });
         } else {
             this.forgotForm.markAllAsTouched();
         }
