@@ -22,12 +22,14 @@ export class SidebarComponent {
       items.push({ icon: 'dashboard', label: 'Dashboard', route: '/developer-dashboard' });
       items.push({ icon: 'payments', label: 'Transactions', route: '/developer-transactions' });
       items.push({ icon: 'router', label: 'Monitoring', route: '/developer-monitoring' });
+      items.push({ icon: 'account_tree', label: 'Intelligence de Routage', route: '/routing' });
       items.push({ icon: 'code', label: 'Intégration & Clés', route: '/developers' });
       items.push({ icon: 'account_tree', label: 'Agrégateurs', route: '/aggregators' });
     } else {
       items.push({ icon: 'dashboard', label: 'Dashboard', route: '/dashboard' });
       items.push({ icon: 'payments', label: 'Transactions', route: '/transactions' });
       items.push({ icon: 'router', label: 'Monitoring', route: '/monitoring' });
+      items.push({ icon: 'alt_route', label: 'Intelligence de Routage', route: '/routing' });
       items.push({ icon: 'code', label: 'Développeurs', route: '/developers' });
       if (role === 'ADMIN') {
         items.push({ icon: 'people', label: 'Utilisateurs', route: '/users' });

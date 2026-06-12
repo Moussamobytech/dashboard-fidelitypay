@@ -6,6 +6,83 @@
 </div>
 
 <div class="routing-grid">
+    <!-- Simulator Card -->
+    <div class="card full-width simulation-card">
+        <div class="card-header">
+            <h3>Prédiction et Explication de Routage</h3>
+            <p class="desc">Simulez une transaction pour voir quel itinéraire serait choisi d'après l'historique réel.</p>
+        </div>
+        <div class="simulation-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Pays</label>
+                    <select [(ngModel)]="simCountry">
+                        <option value="">Sélectionnez un pays</option>
+                        @for (c of countries(); track c) {
+                            <option [value]="c">{{ c }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Opérateur</label>
+                    <select [(ngModel)]="simOperator">
+                        <option value="">Sélectionnez un opérateur</option>
+                        @for (o of operators(); track o) {
+                            <option [value]="o">{{ o }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Montant (FCFA)</label>
+                    <input type="number" [(ngModel)]="simAmount" />
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary" (click)="simulateRouting()" [disabled]="!simCountry() || !simOperator()">
+                        <span class="material-icons-outlined">psychology</span> Simuler
+                    </button>
+                </div>
+            </div>
+
+            @if (simulationResult()) {
+                <div class="simulation-result">
+                    <div class="explanation-box" [class.no-data]="!simulationResult()?.winner">
+                        <span class="material-icons-outlined icon">info</span>
+                        <div class="text" [innerHTML]="simulationResult()?.explanation"></div>
+                    </div>
+
+                    @if (simulationResult()?.allStats?.length) {
+                        <div class="stats-grid">
+                            @for (stat of simulationResult()?.allStats; track stat.route) {
+                                <div class="stat-card" [class.winner]="stat.route === simulationResult()?.winner?.route">
+                                    <div class="stat-header">
+                                        <h4>{{ stat.route }}</h4>
+                                        @if (stat.route === simulationResult()?.winner?.route) {
+                                            <span class="badge badge-success">Gagnant</span>
+                                        }
+                                    </div>
+                                    <div class="stat-metrics">
+                                        <div class="metric">
+                                            <span class="label">Fiabilité</span>
+                                            <span class="val">{{ stat.successRate | number:'1.0-1' }}%</span>
+                                        </div>
+                                        <div class="metric">
+                                            <span class="label">Latence Moy.</span>
+                                            <span class="val">{{ stat.avgLatency | number:'1.0-0' }}ms</span>
+                                        </div>
+                                        <div class="metric">
+                                            <span class="label">Transactions</span>
+                                            <span class="val">{{ stat.total }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
     <div class="card full-width">
         <div class="card-header">
             <h3>Priorisation des Routes</h3>
