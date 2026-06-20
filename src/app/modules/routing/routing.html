@@ -111,4 +111,26 @@
             </article>
         </div>
     </section>
+
+    <section class="card fallback-settings" *ngIf="isAdmin() && fallbackSettings() as settings">
+        <div class="card-header">
+            <h3>Paramètres de fallback</h3>
+            <span>Appliqués aux initiations de paiement</span>
+        </div>
+        <div class="fallback-grid">
+            <label><input type="checkbox" [ngModel]="settings.autoFallback" (ngModelChange)="updateFallbackSetting('autoFallback', $event)"> Fallback automatique</label>
+            <label><input type="checkbox" [ngModel]="settings.smartRetry" (ngModelChange)="updateFallbackSetting('smartRetry', $event)"> Bascule sur erreurs transitoires</label>
+            <label>Nombre maximal de providers tentés
+                <input type="number" min="1" max="10" [ngModel]="settings.retryMaxAttempts" (ngModelChange)="updateFallbackSetting('retryMaxAttempts', $event)">
+            </label>
+            <label>Seuil critique
+                <span class="field-with-unit"><input type="number" min="1" max="60" [ngModel]="settings.criticalTimeoutSeconds" (ngModelChange)="updateFallbackSetting('criticalTimeoutSeconds', $event)"> secondes</span>
+            </label>
+        </div>
+        <div class="fallback-actions">
+            <span *ngIf="fallbackSaveState() === 'saved'">Paramètres enregistrés.</span>
+            <span class="save-error" *ngIf="fallbackSaveState() === 'error'">Échec de l'enregistrement.</span>
+            <button class="btn btn-primary" [disabled]="fallbackSaveState() === 'saving'" (click)="saveFallbackSettings()">Enregistrer</button>
+        </div>
+    </section>
 </div>

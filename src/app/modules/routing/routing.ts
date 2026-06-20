@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PaymentProviderService, PaymentRouteSetting } from '../../core/services/payment-provider.service';
+import { FormsModule } from '@angular/forms';
+import { FallbackSettings, PaymentProviderService, PaymentRouteSetting } from '../../core/services/payment-provider.service';
 import { AuthService } from '../../core/services/auth.service';
 
 type ProviderPerformance = {
@@ -15,7 +16,7 @@ type ProviderPerformance = {
 @Component({
     selector: 'app-routing-config',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, FormsModule],
     templateUrl: './routing.html',
     styleUrls: ['./routing.scss']
 })
@@ -25,6 +26,8 @@ export class RoutingConfigComponent implements OnInit {
 
     routes = signal<PaymentRouteSetting[]>([]);
     isLoading = signal(true);
+    fallbackSettings = signal<FallbackSettings | null>(null);
+    fallbackSaveState = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
     Math = Math;
 
     currentPage = signal(1);
@@ -71,6 +74,33 @@ export class RoutingConfigComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadRoutes();
+        if (this.isAdmin()) this.loadFallbackSettings();
+    }
+
+    loadFallbackSettings(): void {
+        this.paymentProviderService.getFallbackSettings().subscribe({
+            next: settings => this.fallbackSettings.set(settings),
+            error: () => this.fallbackSaveState.set('error')
+        });
+    }
+
+    updateFallbackSetting<K extends keyof FallbackSettings>(key: K, value: FallbackSettings[K]): void {
+        const current = this.fallbackSettings();
+        if (!current) return;
+        this.fallbackSettings.set({ ...current, [key]: value });
+    }
+
+    saveFallbackSettings(): void {
+        const settings = this.fallbackSettings();
+        if (!settings) return;
+        this.fallbackSaveState.set('saving');
+        this.paymentProviderService.updateFallbackSettings(settings).subscribe({
+            next: saved => {
+                this.fallbackSettings.set(saved);
+                this.fallbackSaveState.set('saved');
+            },
+            error: () => this.fallbackSaveState.set('error')
+        });
     }
 
     loadRoutes(): void {
