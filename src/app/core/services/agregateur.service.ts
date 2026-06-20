@@ -7,7 +7,8 @@ import {
   DEVELOPER_PROVIDER_ACCOUNTS_API,
   ADMIN_PAYMENT_ROUTES_API,
   ADMIN_PAYMENT_PROVIDER_ROUTES_API,
-  DEVELOPER_PAYMENT_ROUTES_API
+  DEVELOPER_PAYMENT_ROUTES_API,
+  ADMIN_FALLBACK_SETTINGS_API
 } from './api.config';
 
 export interface CountryConfig {
@@ -85,6 +86,13 @@ export interface PaymentRouteSetting {
   effectiveEnabled: boolean;
 }
 
+export interface FallbackSettings {
+  autoFallback: boolean;
+  smartRetry: boolean;
+  retryMaxAttempts: number;
+  criticalTimeoutSeconds: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AgregateurService {
   private http = inject(HttpClient);
@@ -140,5 +148,13 @@ export class AgregateurService {
 
   setPaymentRoutePriority(routeId: number, priority: number | null): Observable<PaymentRouteSetting> {
     return this.http.patch<PaymentRouteSetting>(`${DEVELOPER_PAYMENT_ROUTES_API}/${routeId}/priority`, { priority });
+  }
+
+  getFallbackSettings(): Observable<FallbackSettings> {
+    return this.http.get<FallbackSettings>(ADMIN_FALLBACK_SETTINGS_API);
+  }
+
+  updateFallbackSettings(settings: FallbackSettings): Observable<FallbackSettings> {
+    return this.http.put<FallbackSettings>(ADMIN_FALLBACK_SETTINGS_API, settings);
   }
 }

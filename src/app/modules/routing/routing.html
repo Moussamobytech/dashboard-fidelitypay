@@ -84,65 +84,77 @@
     </div>
 
     <div class="card full-width">
-        <div class="card-header">
-            <h3>Priorisation des Routes</h3>
-            <button class="btn btn-primary btn-sm">Nouvelle Règle</button>
+        <div class="card-header header-with-actions">
+            <div class="header-title">
+                <h3>Priorisation des Routes</h3>
+            </div>
+            <div class="header-actions">
+                <div class="search-box">
+                    <span class="material-icons-outlined">search</span>
+                    <input type="text" [(ngModel)]="filterText" (ngModelChange)="onFilterChange()" placeholder="Rechercher par pays, opérateur..." />
+                </div>
+                <button class="btn btn-primary btn-sm" (click)="openNewRuleModal()">Nouvelle Règle</button>
+            </div>
         </div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Pays</th>
-                        <th>Opérateur Principal</th>
-                        <th>Priorité</th>
-                        <th>Stratégie</th>
-                        <th>Fallback</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (rule of paginatedRules(); track rule.operator) {
-                    <tr>
-                        <td>{{ rule.country }}</td>
-                        <td><strong>{{ rule.operator }}</strong></td>
-                        <td><span class="priority-badge">#{{ rule.priority }}</span></td>
-                        <td>{{ rule.strategy }}</td>
-                        <td>{{ rule.fallback }}</td>
-                        <td>
-                            <span class="badge" [class.badge-success]="rule.status === 'Actif'"
-                                [class.badge-warning]="rule.status === 'Alerte'">
-                                {{ rule.status }}
-                            </span>
-                        </td>
-                    </tr>
-                    }
-                </tbody>
-            </table>
-
-            <!-- Pagination System -->
-            <div class="pagination-container" *ngIf="routingRules().length > 0">
-                <div class="pagination-info">
-                    Affichage de <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> à
-                    <strong>{{ Math.min(currentPage() * pageSize(), routingRules().length) }}</strong> sur
-                    <strong>{{ routingRules().length }}</strong> règles
-                </div>
-                <div class="pagination-controls">
-                    <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">
-                        <span class="material-icons-outlined">chevron_left</span>
-                    </button>
-
-                    <div class="page-numbers">
-                        @for (p of pages(); track p) {
-                        <button class="btn-pagination" [class.active]="currentPage() === p" (click)="setPage(p)">
-                            {{ p }}
-                        </button>
-                        }
+        <div class="route-groups">
+            @for (group of paginatedGroups(); track group.country + group.operator) {
+            <div class="route-group">
+                <div class="group-header">
+                    <div class="group-title">
+                        <span class="country">{{ group.country }}</span>
+                        <span class="separator">•</span>
+                        <span class="operator">{{ group.operator }}</span>
                     </div>
-
-                    <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
-                        <span class="material-icons-outlined">chevron_right</span>
-                    </button>
                 </div>
+                <div class="group-routes">
+                    @for (route of group.routes; track route.provider) {
+                    <div class="route-item">
+                        <div class="route-priority">
+                            <span class="priority-badge">#{{ route.priority }}</span>
+                        </div>
+                        <div class="route-info">
+                            <div class="provider-name">{{ route.provider }}</div>
+                            <div class="route-meta">
+                                <span class="strategy"><span class="material-icons-outlined">tune</span> {{ route.strategy }}</span>
+                                <span class="fallback"><span class="material-icons-outlined">alt_route</span> Secours: {{ route.fallback }}</span>
+                            </div>
+                        </div>
+                        <div class="route-status">
+                            <span class="badge" [class.badge-success]="route.status === 'Actif'"
+                                [class.badge-warning]="route.status === 'Inactif'">
+                                {{ route.status }}
+                            </span>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+
+        <!-- Pagination System -->
+        <div class="pagination-container" *ngIf="filteredGroups().length > 0">
+            <div class="pagination-info">
+                Affichage de <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> à
+                <strong>{{ Math.min(currentPage() * pageSize(), filteredGroups().length) }}</strong> sur
+                <strong>{{ filteredGroups().length }}</strong> groupes
+            </div>
+            <div class="pagination-controls">
+                <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">
+                    <span class="material-icons-outlined">chevron_left</span>
+                </button>
+
+                <div class="page-numbers">
+                    @for (p of pages(); track p) {
+                    <button class="btn-pagination" [class.active]="currentPage() === p" (click)="setPage(p)">
+                        {{ p }}
+                    </button>
+                    }
+                </div>
+
+                <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+                    <span class="material-icons-outlined">chevron_right</span>
+                </button>
             </div>
         </div>
     </div>
@@ -152,7 +164,7 @@
             <h3>Comparatif Performance</h3>
         </div>
         <div class="perf-list">
-            @for (data of performanceData; track data.route) {
+            @for (data of performanceData(); track data.route) {
             <div class="perf-item">
                 <div class="route-name">{{ data.route }}</div>
                 <div class="metrics">
@@ -175,31 +187,170 @@
     </div>
 
     <div class="card">
-        <div class="card-header">
+        <div class="card-header fallback-card-header">
             <h3>Configuration Fallback</h3>
+            @if (fallbackSaveStatus() === 'saving') {
+                <span class="fallback-status saving">
+                    <span class="material-icons-outlined spin">sync</span> Sauvegarde...
+                </span>
+            }
+            @if (fallbackSaveStatus() === 'saved') {
+                <span class="fallback-status saved">
+                    <span class="material-icons-outlined">check_circle</span> Sauvegardé
+                </span>
+            }
         </div>
         <div class="fallback-settings">
+
+            <!-- Bascule Automatique -->
             <div class="setting-item">
                 <div class="info">
                     <p class="title">Bascule Automatique</p>
-                    <p class="desc">Active le passage au fallback après échec</p>
+                    <p class="desc">Active le passage au fournisseur de secours après un échec</p>
                 </div>
-                <div class="toggle active"></div>
+                <button
+                    class="toggle"
+                    [class.active]="fallbackAutoSwitch()"
+                    (click)="toggleAutoSwitch()"
+                    [attr.aria-label]="fallbackAutoSwitch() ? 'Désactiver la bascule automatique' : 'Activer la bascule automatique'">
+                </button>
             </div>
+
+            <!-- Retry Intelligent -->
             <div class="setting-item">
                 <div class="info">
                     <p class="title">Retry Intelligent</p>
-                    <p class="desc">3 tentatives pour les codes erreurs 5xx</p>
+                    <p class="desc">Re-tentatives automatiques pour les erreurs 5xx</p>
                 </div>
-                <div class="toggle active"></div>
+                <div class="retry-control">
+                    <button
+                        class="toggle"
+                        [class.active]="fallbackSmartRetry()"
+                        (click)="toggleSmartRetry()"
+                        [attr.aria-label]="fallbackSmartRetry() ? 'Désactiver le retry' : 'Activer le retry'">
+                    </button>
+                    @if (fallbackSmartRetry()) {
+                        <div class="counter-group">
+                            <button class="counter-btn" (click)="onRetryCountChange(fallbackRetryCount() - 1)" [disabled]="fallbackRetryCount() <= 1">−</button>
+                            <span class="counter-val">{{ fallbackRetryCount() }} tentative{{ fallbackRetryCount() > 1 ? 's' : '' }}</span>
+                            <button class="counter-btn" (click)="onRetryCountChange(fallbackRetryCount() + 1)" [disabled]="fallbackRetryCount() >= 10">+</button>
+                        </div>
+                    }
+                </div>
             </div>
+
+            <!-- Timeout Critique -->
             <div class="setting-item">
                 <div class="info">
                     <p class="title">Timeout Critique</p>
-                    <p class="desc">Basculer si pas de réponse après 10s</p>
+                    <p class="desc">Basculer vers le fallback si pas de réponse</p>
                 </div>
-                <div class="val-box">10s</div>
+                <div class="timeout-control">
+                    <button class="counter-btn" (click)="onTimeoutChange(fallbackTimeout() - 1)" [disabled]="fallbackTimeout() <= 1">−</button>
+                    <span class="val-box">{{ fallbackTimeout() }}s</span>
+                    <button class="counter-btn" (click)="onTimeoutChange(fallbackTimeout() + 1)" [disabled]="fallbackTimeout() >= 60">+</button>
+                </div>
             </div>
+
         </div>
     </div>
 </div>
+
+<!-- Modal Creation de Règle -->
+@if (isNewRuleModalOpen()) {
+<div class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Nouvelle Règle de Routage</h3>
+            <button class="btn-close" (click)="closeNewRuleModal()">
+                <span class="material-icons-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Fournisseur *</label>
+                    <select [(ngModel)]="newRule().providerId">
+                        <option [value]="null">Sélectionnez un fournisseur</option>
+                        @for (p of providers(); track p.id) {
+                            <option [value]="p.id">{{ p.displayName }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Pays *</label>
+                    <select [ngModel]="newRule().country" (ngModelChange)="onCountryChange($event)">
+                        <option value="">Sélectionnez un pays</option>
+                        @for (c of availableCountries; track c.code) {
+                            <option [value]="c.code">{{ c.name }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Opérateur *</label>
+                    <select [(ngModel)]="newRule().operator" [disabled]="!newRule().country">
+                        <option value="">Sélectionnez un opérateur</option>
+                        @for (o of getAvailableOperators(); track o) {
+                            <option [value]="o">{{ o }}</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Type de Flux</label>
+                    <select [(ngModel)]="newRule().flowType">
+                        <option value="MOBILE_MONEY_REQUEST">Mobile Money (Push/Request)</option>
+                        <option value="HOSTED_CHECKOUT">Hosted Checkout (Page de Paiement)</option>
+                        <option value="WAVE_REDIRECT">Wave (Redirection)</option>
+                        <option value="ORANGE_CI_OTP">Orange CI (OTP)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Environnement</label>
+                    <select [(ngModel)]="newRule().environment">
+                        <option value="SANDBOX">Sandbox (Test)</option>
+                        <option value="LIVE">Live (Production)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Canal Fournisseur</label>
+                    <input type="text" [(ngModel)]="newRule().providerChannel" placeholder="ex: mtn-ci (Code interne API)" />
+                </div>
+                <div class="form-group">
+                    <label>Priorité</label>
+                    <input type="number" [(ngModel)]="newRule().priority" />
+                </div>
+                <div class="form-group">
+                    <label>Coût estimé</label>
+                    <input type="number" [(ngModel)]="newRule().cost" />
+                </div>
+            </div>
+        </div>
+        @if (errorMessage()) {
+            <div class="modal-alert modal-alert-error">
+                <span class="material-icons-outlined">error_outline</span>
+                <span>{{ errorMessage() }}</span>
+            </div>
+        }
+        @if (successMessage()) {
+            <div class="modal-alert modal-alert-success">
+                <span class="material-icons-outlined">check_circle_outline</span>
+                <span>{{ successMessage() }}</span>
+            </div>
+        }
+        <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeNewRuleModal()" [disabled]="isSaving()">Annuler</button>
+            <button class="btn btn-primary" (click)="saveNewRule()" [disabled]="isSaving()">
+                @if (isSaving()) {
+                    <span class="material-icons-outlined spin">sync</span> Enregistrement...
+                } @else {
+                    <span class="material-icons-outlined">add_circle_outline</span> Créer la Règle
+                }
+            </button>
+        </div>
+    </div>
+</div>
+}
