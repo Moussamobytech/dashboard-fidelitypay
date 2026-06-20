@@ -1,5 +1,6 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
@@ -11,15 +12,20 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return next(req);
     }
 
-    // If we have a token, clone the request and add the Authorization header
-    if (token) {
-        const cloned = req.clone({
+    const authReq = token
+        ? req.clone({
             setHeaders: {
                 Authorization: `Bearer ${token}`
             }
-        });
-        return next(cloned);
-    }
+        })
+        : req;
 
-    return next(req);
+    return next(authReq).pipe(
+        catchError((error) => {
+            if (token && error instanceof HttpErrorResponse && error.status === 401 && authService.isTokenExpired(token)) {
+                authService.logout();
+            }
+            return throwError(() => error);
+        })
+    );
 };

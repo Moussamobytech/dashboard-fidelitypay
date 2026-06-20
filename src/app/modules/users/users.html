@@ -157,27 +157,14 @@
             <div class="form-row">
                 <div class="form-group flex-1">
                     <label>Rôle</label>
-                    <div class="input-wrapper select-wrapper">
-                        <span class="material-icons-outlined">admin_panel_settings</span>
-                        <select [(ngModel)]="editForm().role" name="role" required>
-                            <option value="ADMIN">ADMIN</option>
-                            <option value="DEVELOPER">DEVELOPER</option>
-                            <option value="ENTREPRENEUR_CEO">ENTREPRENEUR / CEO</option>
-                            <option value="PRODUCT_MANAGER">PRODUCT MANAGER</option>
-                            <option value="AUTRE">AUTRE</option>
-                        </select>
-                    </div>
+                    <app-fp-select icon="admin_panel_settings" ariaLabel="Rôle" name="role"
+                        [(ngModel)]="editForm().role" [options]="roleOptions"></app-fp-select>
                 </div>
 
                 <div class="form-group flex-1">
                     <label>Statut du compte</label>
-                    <div class="input-wrapper select-wrapper">
-                        <span class="material-icons-outlined">power_settings_new</span>
-                        <select [(ngModel)]="editForm().isActive" name="isActive">
-                            <option [ngValue]="true">Actif</option>
-                            <option [ngValue]="false">Inactif</option>
-                        </select>
-                    </div>
+                    <app-fp-select icon="power_settings_new" ariaLabel="Statut du compte" name="isActive"
+                        [(ngModel)]="editForm().isActive" [options]="accountStatusOptions"></app-fp-select>
                 </div>
             </div>
 
@@ -189,8 +176,8 @@
                 </div>
             </div>
             
-            <div class="form-group" *ngIf="editForm().role === 'DEVELOPER'">
-                <label>Nom de l'Application (Développeur)</label>
+            <div class="form-group" *ngIf="editForm().role !== 'ADMIN'">
+                <label>Nom de l'Application</label>
                 <div class="input-wrapper">
                     <span class="material-icons-outlined">web</span>
                     <input type="text" [(ngModel)]="editForm().applicationName" name="applicationName" placeholder="Application">

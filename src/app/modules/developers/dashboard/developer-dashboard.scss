@@ -236,6 +236,11 @@
     }
 }
 
+.empty-state-cell {
+    border-radius: 12px !important;
+    padding: 0 !important;
+}
+
 .empty-state {
     display: flex;
     flex-direction: column;

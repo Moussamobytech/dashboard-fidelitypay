@@ -10,8 +10,6 @@ export interface User {
     role: string;
     applicationName?: string;
     countries?: string[];
-    callbackUrl?: string;
-    redirectUrl?: string;
     createdAt: string;
     isActive: boolean;
 }
@@ -22,8 +20,6 @@ export interface UserUpdateRequest {
     role?: string;
     applicationName?: string;
     countries?: string[];
-    callbackUrl?: string;
-    redirectUrl?: string;
     isActive?: boolean;
 }
 

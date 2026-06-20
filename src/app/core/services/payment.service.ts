@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { Payment, PaymentInitiateRequest, PaymentResponseDTO } from '../models/payment.model';
+import { DashboardPaymentTestResponse, Payment, PaymentInitiateRequest } from '../models/payment.model';
 import { PAYMENT_API } from './api.config';
 
 @Injectable({
@@ -22,11 +22,11 @@ export class PaymentService {
     }
 
     /**
-     * Initialisation d’un paiement
+     * Dashboard manual payment test.
      * POST /api/payments/initiate
      */
-    initiatePayment(request: PaymentInitiateRequest): Observable<PaymentResponseDTO> {
-        return this.http.post<PaymentResponseDTO>(`${this.apiUrl}/payments/initiate`, request);
+    initiateDashboardTestPayment(request: PaymentInitiateRequest): Observable<DashboardPaymentTestResponse> {
+        return this.http.post<DashboardPaymentTestResponse>(`${this.apiUrl}/payments/initiate`, request);
     }
 
     /**

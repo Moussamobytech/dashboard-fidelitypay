@@ -43,10 +43,10 @@ export class LoginComponent {
                 next: (response) => {
                     this.isLoading.set(false);
                     const role = response.role;
-                    if (role === 'DEVELOPER') {
-                        this.router.navigate(['/developer-dashboard']);
-                    } else {
+                    if (role === 'ADMIN') {
                         this.router.navigate(['/dashboard']);
+                    } else {
+                        this.router.navigate(['/developer-dashboard']);
                     }
                 },
                 error: (err) => {

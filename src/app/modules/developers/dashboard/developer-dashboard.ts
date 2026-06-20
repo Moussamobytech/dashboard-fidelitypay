@@ -178,13 +178,14 @@ export class DeveloperDashboardComponent implements OnInit {
         const avgLatency = latencies.length > 0
             ? latencies.reduce((a, b) => a + b, 0) / latencies.length : 0;
 
-        const fallbackCount = filtered.filter(p => p.usedFallback).length;
+        const hasUsedFallbackFlag = filtered.some(p => (p as any).usedFallback !== undefined);
+        const fallbackCount = hasUsedFallbackFlag ? filtered.filter(p => p.usedFallback).length : 0;
 
         this.stats.update(current => {
             const next = [...current];
             next[0] = { ...next[0], value: `${totalVolume.toLocaleString()} F`, trend: totalVolume > 0 ? 'up' : 'neutral' };
             next[1] = { ...next[1], value: `${successRate.toFixed(1)}%`, trend: successRate > 90 ? 'up' : successRate > 0 ? 'down' : 'neutral' };
-            next[2] = { ...next[2], value: String(fallbackCount), trend: fallbackCount > 0 ? 'up' : 'neutral' };
+            next[2] = { ...next[2], value: hasUsedFallbackFlag ? String(fallbackCount) : 'N/A', trend: fallbackCount > 0 ? 'up' : 'neutral' };
             next[3] = { ...next[3], value: avgLatency > 0 ? `${(avgLatency / 1000).toFixed(2)}s` : '--', trend: avgLatency > 0 && avgLatency < 500 ? 'up' : 'neutral' };
             return next;
         });

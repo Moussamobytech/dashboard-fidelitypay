@@ -6,13 +6,9 @@
 <div class="card">
     <div class="log-filters">
         <div class="filter-group">
-            <input type="text" placeholder="Filtrer par message, ID, route...">
-            <select>
-                <option>Tous les niveaux</option>
-                <option>INFO</option>
-                <option>WARNING</option>
-                <option>ERROR</option>
-            </select>
+            <input type="search" placeholder="Filtrer par message, ID, route..." [value]="searchTerm()" (input)="setSearch($event)">
+            <app-fp-select icon="filter_list" ariaLabel="Niveau de log" [value]="level()" [options]="levelOptions"
+                (valueChange)="setLevel($event)"></app-fp-select>
         </div>
         <div class="date-filters">
             <button class="btn btn-outline">Dernier 24h</button>
@@ -21,7 +17,7 @@
     </div>
 
     <div class="logs-container">
-        @for (log of logs(); track log.id) {
+        @for (log of filteredLogs(); track log.id) {
         <div class="log-row" [class]="log.status.toLowerCase()">
             <div class="log-meta">
                 <span class="timestamp">{{ log.timestamp }}</span>
@@ -34,7 +30,7 @@
             </div>
         </div>
         }
-        @if (logs().length === 0) {
+        @if (filteredLogs().length === 0) {
         <div class="empty-state">Aucun log trouvé.</div>
         }
     </div>

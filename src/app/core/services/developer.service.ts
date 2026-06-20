@@ -1,15 +1,13 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { DEVELOPER_KEYS_API, ADMIN_DEVELOPERS_API } from './api.config';
+import { DEVELOPER_KEYS_API, DEVELOPER_WEBHOOKS_API, ADMIN_DEVELOPERS_API } from './api.config';
 
 export interface ApiKey {
     id: string;
     name: string;
-    publicKey: string;
-    secretKey?: string;
-    secretKeyMasked: string;
-    environment: 'sandbox' | 'live';
+    apiKey?: string;
+    apiKeyMasked: string;
     isActive: boolean;
     createdAt: string;
     lastUsedAt?: string;
@@ -24,6 +22,7 @@ export interface WebhookEndpoint {
     url: string;
     event: string;
     description?: string;
+    secret?: string;
     isActive: boolean;
     lastTriggeredAt?: string;
     lastStatusCode?: number;
@@ -46,18 +45,18 @@ export class DeveloperService {
     private adminUrl = ADMIN_DEVELOPERS_API;
 
     private keysSubject = new BehaviorSubject<ApiKey[]>([]);
+    private keysLoaded = false;
 
-    constructor() {
-        this.loadKeys();
-    }
+    constructor() { }
 
     private getHeaders() {
         return {};
     }
 
     private loadKeys() {
+        this.keysLoaded = true;
         this.http.get<ApiKey[]>(this.apiUrl, { headers: this.getHeaders() }).subscribe({
-            next: (keys) => this.keysSubject.next(keys),
+            next: (keys) => this.keysSubject.next(keys.filter(key => key.isActive)),
             error: (err) => {
                 console.warn('Developer API keys not found or unauthorized', err);
                 this.keysSubject.next([]);
@@ -66,51 +65,41 @@ export class DeveloperService {
     }
 
     getKeys(): Observable<ApiKey[]> {
+        if (!this.keysLoaded) {
+            this.loadKeys();
+        }
         return this.keysSubject.asObservable();
     }
 
-    createKey(name: string, environment: 'sandbox' | 'live'): Observable<ApiKey> {
-        const request = { name, environment };
+    createKey(name: string): Observable<ApiKey> {
+        const request = { name };
         return this.http.post<ApiKey>(this.apiUrl, request, { headers: this.getHeaders() });
     }
 
-    generateKey(name: string, environment: 'sandbox' | 'live'): void {
-        this.createKey(name, environment).subscribe({
-            next: (newKey) => this.addKeyToState(newKey),
-            error: (err) => console.error('Failed to generate key:', err)
-        });
+    renameKey(id: string, name: string): Observable<ApiKey> {
+        return this.http.patch<ApiKey>(`${this.apiUrl}/${id}`, { name }, { headers: this.getHeaders() }).pipe(
+            tap((updatedKey) => {
+                const keys = this.keysSubject.getValue().map(key => key.id === id ? updatedKey : key);
+                this.keysSubject.next(keys.filter(key => key.isActive));
+            })
+        );
     }
 
-    revokeKey(id: string): void {
-        this.http.post(`${this.apiUrl}/${id}/revoke`, {}, { headers: this.getHeaders() }).subscribe({
-            next: () => {
-                const keys = this.keysSubject.getValue().map(k => {
-                    if (k.id === id) return { ...k, isActive: false };
-                    return k;
-                });
+    deleteKey(id: string): Observable<any> {
+        return this.http.delete(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
+            tap(() => {
+                const keys = this.keysSubject.getValue().filter(key => key.id !== id);
                 this.keysSubject.next(keys);
-            },
-            error: (err) => console.error('Failed to revoke key:', err)
-        });
-    }
-
-    rotateKeys(): void {
-        this.http.post<{ message: string, newKeys: ApiKey[] }>(`${this.apiUrl}/rotate`, {}, { headers: this.getHeaders() }).subscribe({
-            next: (res) => {
-                // When rotating, essentially all old keys become inactive and we get new ones
-                this.loadKeys();
-            },
-            error: (err) => console.error('Failed to rotate keys:', err)
-        });
-    }
-
-    deleteKey(id: string): void {
-        this.revokeKey(id);
+            })
+        );
     }
 
     addKeyToState(newKey: ApiKey): void {
         const currentKeys = this.keysSubject.getValue();
-        this.keysSubject.next([...currentKeys, newKey]);
+        const nextKeys = currentKeys.some(key => key.id === newKey.id)
+            ? currentKeys.map(key => key.id === newKey.id ? newKey : key)
+            : [...currentKeys, newKey];
+        this.keysSubject.next(nextKeys.filter(key => key.isActive));
     }
 
     // =========================================================================
@@ -131,26 +120,26 @@ export class DeveloperService {
 
     getWebhooks(event?: string): Observable<WebhookEndpoint[]> {
         const params = event ? { event } : undefined;
-        return this.http.get<WebhookEndpoint[]>(`${this.apiUrl.replace('/keys', '/webhooks')}`, {
+        return this.http.get<WebhookEndpoint[]>(DEVELOPER_WEBHOOKS_API, {
             headers: this.getHeaders(),
             params
         });
     }
 
     createWebhook(request: CreateWebhookRequest): Observable<WebhookEndpoint> {
-        return this.http.post<WebhookEndpoint>(`${this.apiUrl.replace('/keys', '/webhooks')}`, request, {
+        return this.http.post<WebhookEndpoint>(DEVELOPER_WEBHOOKS_API, request, {
             headers: this.getHeaders()
         });
     }
 
     deleteWebhook(id: string): Observable<any> {
-        return this.http.delete(`${this.apiUrl.replace('/keys', '/webhooks')}/${id}`, {
+        return this.http.delete(`${DEVELOPER_WEBHOOKS_API}/${id}`, {
             headers: this.getHeaders()
         });
     }
 
     setWebhookActive(id: string, isActive: boolean): Observable<WebhookEndpoint> {
-        return this.http.patch<WebhookEndpoint>(`${this.apiUrl.replace('/keys', '/webhooks')}/${id}`, { isActive }, {
+        return this.http.patch<WebhookEndpoint>(`${DEVELOPER_WEBHOOKS_API}/${id}`, { isActive }, {
             headers: this.getHeaders()
         });
     }

@@ -1,0 +1,22 @@
+.api-keys-page {
+    display: grid;
+    gap: 1rem;
+}
+
+.key-name-input {
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    min-height: 36px;
+    padding: 0.45rem 0.6rem;
+    width: min(100%, 260px);
+}
+
+.generated-key code {
+    overflow-wrap: anywhere;
+}
+
+.fp-btn-danger {
+    background: #fff;
+    border-color: #fecaca;
+    color: #b91c1c;
+}

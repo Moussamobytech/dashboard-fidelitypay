@@ -7,41 +7,32 @@
 
 
 <div class="card filters-card">
+    <div class="filter-group search-filter">
+        <label>Recherche</label>
+        <div class="context-search">
+            <span class="material-icons-outlined">search</span>
+            <input type="search" placeholder="Pays, opérateur, fournisseur, statut..." [value]="searchTerm()" (input)="setSearch($event)">
+        </div>
+    </div>
     <div class="filter-group">
         <label>Période</label>
-        <select (change)="setPeriod($event)">
-            <option value="all">Toutes</option>
-            <option value="24h">Aujourd'hui</option>
-            <option value="week">Cette semaine</option>
-            <option value="month">Ce mois</option>
-        </select>
+        <app-fp-select icon="calendar_today" ariaLabel="Période" [value]="period()" [options]="periodOptions"
+            (valueChange)="setPeriod($event)"></app-fp-select>
     </div>
     <div class="filter-group">
         <label>Pays</label>
-        <select (change)="setCountry($event)">
-            <option value="">Tous</option>
-            @for(c of countries(); track c) {
-            <option [value]="c">{{getCountry(c)}}</option>
-            }
-        </select>
+        <app-fp-select icon="public" ariaLabel="Pays" [value]="country()" [options]="countryOptions()"
+            (valueChange)="setCountry($event)"></app-fp-select>
     </div>
     <div class="filter-group">
         <label>Status</label>
-        <select (change)="setStatus($event)">
-            <option value="">Tous</option>
-            <option value="SUCCESS">Succès</option>
-            <option value="FAILED">Échec</option>
-            <option value="PENDING">En cours</option>
-        </select>
+        <app-fp-select icon="flag" ariaLabel="Statut" [value]="status()" [options]="statusOptions"
+            (valueChange)="setStatus($event)"></app-fp-select>
     </div>
     <div class="filter-group">
         <label>Opérateur</label>
-        <select (change)="setOperator($event)">
-            <option value="">Tous</option>
-            @for(op of operators(); track op) {
-            <option [value]="op">{{ op }}</option>
-            }
-        </select>
+        <app-fp-select icon="account_balance_wallet" ariaLabel="Opérateur" [value]="operator()" [options]="operatorOptions()"
+            (valueChange)="setOperator($event)"></app-fp-select>
     </div>
 </div>
 
@@ -56,10 +47,10 @@
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Pays</th>
                     <th>Opérateur</th>
-                    <th>Route</th>
+                    <th>Fournisseur</th>
+                    <th>Parcours</th>
                     <th>Montant</th>
                     <th>Status</th>
                     <th>Latence</th>
@@ -69,10 +60,18 @@
             <tbody>
                 @for (txn of paginatedTransactions(); track txn.paymentId) {
                 <tr>
-                    <td class="mono">{{ txn.paymentId.substring(0, 8) }}…</td>
                     <td>{{ $any(txn).countryName || 'N/A' }}</td>
                     <td>{{ txn.operator || '-' }}</td>
-                    <td><span class="route-badge">{{ txn.routeName || 'N/A' }}</span></td>
+                    <td><span class="badge provider">{{ txn.provider || 'Non attribué' }}</span></td>
+                    <td>
+                        <span class="flow-cell">
+                            {{ flowLabel(txn.flowType) }}
+                            <button *ngIf="txn.paymentUrl" type="button" class="copy-link" title="Copier le lien de paiement"
+                                aria-label="Copier le lien de paiement" (click)="copyPaymentLink(txn)">
+                                <span class="material-icons-outlined">content_copy</span>
+                            </button>
+                        </span>
+                    </td>
                     <td class="amount">{{ txn.amount | number:'1.0-0' }} {{ txn.currency }}</td>
                     <td>
                         <span class="badge status" [class]="txn.status.toLowerCase()">{{ txn.status }}</span>

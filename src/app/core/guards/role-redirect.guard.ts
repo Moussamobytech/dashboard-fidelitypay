@@ -17,13 +17,10 @@ export const roleRedirectGuard: CanActivateFn = (route, state) => {
 
     const role = authService.userRole();
 
-    if (role === 'DEVELOPER') {
-        router.navigate(['/developer-dashboard']);
-    } else if (role === 'ADMIN') {
+    if (role === 'ADMIN') {
         router.navigate(['/dashboard']);
     } else {
-        // Default fallback
-        router.navigate(['/dashboard']);
+        router.navigate(['/developer-dashboard']);
     }
 
     return false; // Prevent navigation to the original path ('') as we are redirecting

@@ -23,6 +23,7 @@ export interface Payment {
     providerPaymentId?: string;
     providerResponse?: string;
     paymentUrl?: string;
+    flowType?: 'MOBILE_MONEY_REQUEST' | 'WAVE_REDIRECT' | 'ORANGE_CI_OTP' | 'HOSTED_CHECKOUT';
     providerResponseTimeMs?: number;
     createdAt?: string; // ISO date string
     updatedAt?: string; // ISO date string
@@ -32,13 +33,21 @@ export interface Payment {
     countryName?: string; // Human readable country name
     userId?: string;     // ID of the user who owns the payment
     appName?: string;    // Nom de l'application qui a initié le paiement
+    initiationSource?: 'DASHBOARD' | 'API';
 }
 
 export interface PaymentInitiateRequest {
     amount: number;
     country: string;
     operator: string;
-    phone: string;
+    phone?: string;
+    firstname?: string;
+    lastname?: string;
+    email?: string;
+    environment?: 'sandbox' | 'live';
+    idempotencyKey?: string;
+    returnUrl?: string;
+    cancelUrl?: string;
 }
 
 export interface PaymentResponseDTO {
@@ -47,4 +56,22 @@ export interface PaymentResponseDTO {
     routeName: string;
     routeProvider: string;
     routeLatency: number;
+}
+
+export interface DashboardPaymentTestResponse {
+    paymentId: string;
+    status: PaymentStatus;
+    paymentUrl?: string;
+    provider?: string;
+    flowType?: 'MOBILE_MONEY_REQUEST' | 'WAVE_REDIRECT' | 'ORANGE_CI_OTP' | 'HOSTED_CHECKOUT';
+    operator?: string;
+    country?: string;
+    amount?: number;
+    currency?: string;
+    failureReason?: string;
+    nextAction?: {
+        type: string;
+        provider?: string;
+        message?: string;
+    };
 }

@@ -1,0 +1,180 @@
+<div class="payment-tester-page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Paiement test</p>
+            <h1>Tester un paiement</h1>
+            <p class="subtitle">Initiez un paiement depuis le dashboard avec la même orchestration que l’API marchand.</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline" type="button" routerLink="/developer-transactions">
+                <span class="material-icons-outlined">receipt_long</span>
+                Transactions
+            </button>
+            <button class="btn btn-outline" type="button" routerLink="/api-keys">
+                <span class="material-icons-outlined">vpn_key</span>
+                Clés API
+            </button>
+        </div>
+    </header>
+
+    <div class="tester-grid">
+        <section class="card tester-card">
+            <div class="card-header">
+                <div>
+                    <h2>Nouveau paiement test</h2>
+                    <p>Utilise vos routes et identifiants agrégateur pour valider l'intégration avant le branchement API.</p>
+                </div>
+            </div>
+
+            <form class="tester-form" (ngSubmit)="submit()">
+                <div class="form-row">
+                    <label>
+                        Environnement
+                        <app-fp-select icon="layers" ariaLabel="Environnement" [value]="form.environment || null"
+                            [options]="environmentOptions()" [disabled]="isLoadingOptions() || environments().length === 0"
+                            (valueChange)="setEnvironment($event)"></app-fp-select>
+                    </label>
+
+                    <label>
+                        Montant XOF
+                        <input name="amount" type="number" min="1" step="1" [(ngModel)]="form.amount" required>
+                    </label>
+                </div>
+
+                <div class="form-row">
+                    <label>
+                        Pays
+                        <app-fp-select icon="public" ariaLabel="Pays" [value]="form.country"
+                            [options]="countryOptions()" [disabled]="isLoadingOptions() || countries().length === 0"
+                            (valueChange)="setCountry($event)"></app-fp-select>
+                    </label>
+
+                    <label>
+                        Opérateur
+                        <app-fp-select icon="account_balance_wallet" ariaLabel="Opérateur" [value]="form.operator"
+                            [options]="operatorOptions()" [disabled]="isLoadingOptions() || operators().length === 0"
+                            (valueChange)="setOperator($event)"></app-fp-select>
+                    </label>
+                </div>
+
+                <div class="form-row">
+                    <label>
+                        Téléphone client{{ phoneRequired() ? '' : ' (optionnel)' }}
+                        <input name="phone" type="tel" [(ngModel)]="form.phone" [placeholder]="phonePlaceholder()" [required]="phoneRequired()">
+                    </label>
+
+                    <label>
+                        Email client
+                        <input name="email" type="email" [(ngModel)]="form.email" placeholder="client@example.com">
+                    </label>
+                </div>
+
+                <div class="form-row">
+                    <label>
+                        Prénom
+                        <input name="firstname" type="text" [(ngModel)]="form.firstname" required>
+                    </label>
+
+                    <label>
+                        Nom
+                        <input name="lastname" type="text" [(ngModel)]="form.lastname" required>
+                    </label>
+                </div>
+
+                <div class="form-row">
+                    <label>
+                        Return URL
+                        <input name="returnUrl" type="url" [(ngModel)]="form.returnUrl" placeholder="https://merchant.example/success">
+                    </label>
+
+                    <label>
+                        Cancel URL
+                        <input name="cancelUrl" type="url" [(ngModel)]="form.cancelUrl" placeholder="https://merchant.example/cancel">
+                    </label>
+                </div>
+
+                <label>
+                    Idempotency-Key
+                    <div class="key-input">
+                        <input name="idempotencyKey" type="text" [(ngModel)]="form.idempotencyKey" required>
+                        <button class="btn btn-outline" type="button" (click)="resetIdempotency()">Regénérer</button>
+                    </div>
+                </label>
+
+                <p class="form-error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+
+                <div class="form-actions">
+                    <button class="btn btn-primary" type="submit" [disabled]="isSubmitting() || isLoadingOptions() || operators().length === 0">
+                        <span class="material-icons-outlined">play_arrow</span>
+                        {{ isSubmitting() ? 'Initiation...' : 'Initier le test' }}
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="card result-card">
+            <div class="card-header">
+                <div>
+                    <h2>Résultat</h2>
+                    <p>Le test explique ce qui bloque avant que vous câbliez votre plateforme externe.</p>
+                </div>
+            </div>
+
+            <div class="empty-result" *ngIf="!result()">
+                <span class="material-icons-outlined">science</span>
+                <p>Aucun test lancé.</p>
+            </div>
+
+            <div class="result-stack" *ngIf="result() as payment">
+                <div class="status-line">
+                    <span class="status-pill" [attr.data-status]="payment.status">{{ payment.status }}</span>
+                    <button class="btn btn-outline btn-small" type="button" (click)="copy(payment.paymentId)">Copier ID</button>
+                </div>
+
+                <dl>
+                    <div>
+                        <dt>Payment ID</dt>
+                        <dd>{{ payment.paymentId }}</dd>
+                    </div>
+                    <div>
+                        <dt>Provider</dt>
+                        <dd>{{ payment.provider || '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Opérateur</dt>
+                        <dd>{{ payment.operator || '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Parcours client</dt>
+                        <dd>
+                            <strong>{{ flowLabel(payment) }}</strong>
+                            <span class="flow-description">{{ flowDescription(payment) }}</span>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Montant</dt>
+                        <dd>{{ payment.amount | number:'1.0-0' }} {{ payment.currency || 'XOF' }}</dd>
+                    </div>
+                    <div *ngIf="payment.failureReason">
+                        <dt>Erreur</dt>
+                        <dd>{{ payment.failureReason }}</dd>
+                    </div>
+                    <div>
+                        <dt>Diagnostic</dt>
+                        <dd>{{ failureHelp(payment) }}</dd>
+                    </div>
+                </dl>
+
+                <a class="payment-link" *ngIf="payment.paymentUrl" [href]="payment.paymentUrl" target="_blank" rel="noopener">
+                    <span class="material-icons-outlined">open_in_new</span>
+                    Ouvrir la page de paiement
+                </a>
+
+                <div class="next-action" *ngIf="payment.nextAction">
+                    <strong>{{ payment.nextAction.type }}</strong>
+                    <p>{{ payment.nextAction.message }}</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>

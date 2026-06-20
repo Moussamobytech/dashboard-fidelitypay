@@ -42,9 +42,6 @@
     .header {
         padding: 0 1.5rem;
     }
-    .search-bar {
-        width: 250px;
-    }
 }
 
 @media (max-width: 768px) {
@@ -54,46 +51,11 @@
     .menu-toggle {
         display: flex;
     }
-    .search-bar {
-        display: none; /* Cache la recherche sur mobile pour gagner de la place */
-    }
     .date-display {
         display: none !important;
     }
     .actions {
         gap: 0.5rem;
-    }
-}
-
-.search-bar {
-    display: flex;
-    align-items: center;
-    background: var(--bg-main);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    width: 350px;
-    gap: 0.5rem;
-    transition: all 0.2s ease;
-
-    &:focus-within {
-        border-color: var(--primary);
-        background: white;
-        box-shadow: 0 0 0 3px var(--primary-light);
-    }
-
-    .material-icons-outlined {
-        font-size: 1.25rem;
-        color: var(--text-muted);
-    }
-
-    input {
-        border: none;
-        background: transparent;
-        outline: none;
-        font-size: 0.9rem;
-        width: 100%;
-        color: var(--text-main);
     }
 }
 

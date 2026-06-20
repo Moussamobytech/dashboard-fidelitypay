@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { PaymentService } from '../../core/services/payment.service';
 import { Payment, PaymentStatus } from '../../core/models/payment.model';
 import { FormsModule } from '@angular/forms';
-// Force rebuild to pick up interface changes
 
 @Component({
     selector: 'app-transactions',

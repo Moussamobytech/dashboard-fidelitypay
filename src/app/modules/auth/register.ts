@@ -80,14 +80,10 @@ export class RegisterComponent {
             }).subscribe({
                 next: (response: any) => {
                     this.isLoading.set(false);
-                    // Redirection based on role
-                    if (role === 'DEVELOPER') {
-                        this.router.navigate(['/developer-dashboard']);
-                    } else if (role === 'ADMIN') {
+                    if (role === 'ADMIN') {
                         this.router.navigate(['/dashboard']);
                     } else {
-                        // CLIENT or others
-                        this.router.navigate(['/dashboard']);
+                        this.router.navigate(['/developer-dashboard']);
                     }
                 },
                 error: (err: any) => {

@@ -1,0 +1,109 @@
+<main class="api-keys-page fp-page">
+    <header class="fp-page-header">
+        <div>
+            <p class="fp-eyebrow">Accès serveur</p>
+            <h1>Clés API</h1>
+            <p>Créez et gérez les clés utilisées exclusivement par vos serveurs.</p>
+        </div>
+        <div class="fp-actions">
+            <a class="fp-btn fp-btn-secondary" routerLink="/developers">Intégration</a>
+            <a class="fp-btn fp-btn-secondary" routerLink="/api-docs">Documentation</a>
+        </div>
+    </header>
+
+    <section class="fp-panel" *ngIf="!isAdmin()">
+        <div class="fp-panel-header">
+            <div>
+                <h2>Créer une clé</h2>
+                <p>La clé complète est affichée une seule fois. Conservez-la côté serveur.</p>
+            </div>
+        </div>
+        <div class="fp-inline-form">
+            <label>
+                Nom de la clé
+                <input name="keyName" type="text" [(ngModel)]="keyName" minlength="3" maxlength="100" placeholder="Backend production" (keydown.enter)="createKey()">
+            </label>
+            <button class="fp-btn fp-btn-primary" type="button" [disabled]="isCreating() || keyName.trim().length < 3" (click)="createKey()">
+                {{ isCreating() ? 'Création...' : 'Créer la clé' }}
+            </button>
+        </div>
+    </section>
+
+    <section class="fp-panel generated-key" *ngIf="createdKey() as key">
+        <div class="fp-panel-header">
+            <div>
+                <h2>Clé générée</h2>
+                <p>Copiez-la maintenant. Elle ne sera plus accessible après fermeture.</p>
+            </div>
+            <div class="fp-actions">
+                <button class="fp-btn fp-btn-secondary" type="button" (click)="closeCreatedKey()">Fermer</button>
+                <button class="fp-btn fp-btn-danger" type="button" [disabled]="deletingKeyId() === key.id" (click)="deleteKey(key)">Supprimer</button>
+            </div>
+        </div>
+        <div class="fp-secret-grid single-key">
+            <div>
+                <span>Clé API</span>
+                <code>{{ key.apiKey }}</code>
+                <button class="fp-copy" type="button" (click)="copy(key.apiKey)">Copier la clé API</button>
+            </div>
+        </div>
+    </section>
+
+    <p class="fp-error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+
+    <section class="fp-panel">
+        <div class="fp-panel-header">
+            <div>
+                <h2>{{ isAdmin() ? 'Clés marchands' : 'Mes clés' }}</h2>
+                <p>{{ keys().length }} clé(s).</p>
+            </div>
+        </div>
+        <div class="fp-table-wrap">
+            <table class="fp-table">
+                <thead>
+                    <tr>
+                        <th>{{ isAdmin() ? 'Utilisateur' : 'Nom' }}</th>
+                        <th>Clé API</th>
+                        <th>Dernier usage</th>
+                        <th>Créée</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let key of keys()">
+                        <td>
+                            <div class="fp-stack" *ngIf="isAdmin(); else merchantName">
+                                <strong>{{ key.userFullName || 'Utilisateur inconnu' }}</strong>
+                                <span>{{ key.userEmail || 'N/A' }}</span>
+                            </div>
+                            <ng-template #merchantName>
+                                <input *ngIf="editingKeyId() === key.id; else keyLabel" class="key-name-input" [(ngModel)]="editingName" minlength="3" maxlength="100">
+                                <ng-template #keyLabel>{{ key.name }}</ng-template>
+                            </ng-template>
+                        </td>
+                        <td><code class="fp-mono">{{ key.apiKeyMasked }}</code></td>
+                        <td>{{ key.lastUsedAt ? (key.lastUsedAt | date:'dd MMM yyyy HH:mm') : 'Jamais' }}</td>
+                        <td>{{ key.createdAt | date:'dd MMM yyyy' }}</td>
+                        <td>
+                            <div class="fp-row-actions">
+                                <ng-container *ngIf="!isAdmin() && editingKeyId() === key.id; else standardActions">
+                                    <button class="fp-icon-btn" type="button" [disabled]="renamingKeyId() === key.id" (click)="saveRename(key)">Enregistrer</button>
+                                    <button class="fp-icon-btn" type="button" [disabled]="renamingKeyId() === key.id" (click)="cancelRename()">Annuler</button>
+                                </ng-container>
+                                <ng-template #standardActions>
+                                    <button class="fp-icon-btn" type="button" *ngIf="!isAdmin()" (click)="startRename(key)">Renommer</button>
+                                    <button class="fp-icon-btn danger" type="button" [disabled]="deletingKeyId() === key.id" (click)="deleteKey(key)">
+                                        {{ deletingKeyId() === key.id ? 'Suppression...' : 'Supprimer' }}
+                                    </button>
+                                </ng-template>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="keys().length === 0">
+                        <td colspan="5"><div class="fp-empty">Aucune clé API.</div></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>

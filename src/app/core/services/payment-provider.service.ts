@@ -10,13 +10,7 @@ import {
   DEVELOPER_PAYMENT_ROUTES_API
 } from './api.config';
 
-export interface CountryConfig {
-  id?: number;
-  countryName: string;
-  operators: string;
-}
-
-export interface Agregateur {
+export interface ProviderIntegration {
   id?: number;
   nomA: string;
   cleApblic: string;
@@ -25,7 +19,7 @@ export interface Agregateur {
   cleAtoken: string;
   nompays: string;
   nomOperateur: string;
-  countryConfigs?: CountryConfig[];
+  countryConfigs?: CoverageConfig[];
   ownerUserId?: string;
   enabled?: boolean;
   createdAt?: string;
@@ -37,7 +31,7 @@ export interface Agregateur {
   environment?: string;
 }
 
-export interface CountryConfig {
+export interface CoverageConfig {
   id?: number;
   countryName: string;
   operators: string;
@@ -71,7 +65,8 @@ export interface PaymentRouteSetting {
   country: string;
   operator: string;
   flowType: string;
-  environment: string;
+  liveEnabled: boolean;
+  sandboxEnabled: boolean;
   providerChannel: string;
   priority: number;
   merchantPriority?: number | null;
@@ -86,7 +81,7 @@ export interface PaymentRouteSetting {
 }
 
 @Injectable({ providedIn: 'root' })
-export class AgregateurService {
+export class PaymentProviderService {
   private http = inject(HttpClient);
 
   getPaymentProviders(admin = false): Observable<PaymentProvider[]> {

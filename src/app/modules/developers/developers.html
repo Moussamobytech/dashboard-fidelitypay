@@ -2,14 +2,11 @@
     <header class="fp-page-header">
         <div>
             <p class="fp-eyebrow">{{ isAdmin() ? 'Administration' : 'Developer Console' }}</p>
-            <h1>{{ isAdmin() ? 'Clés API marchands' : 'Clés API' }}</h1>
-            <p>{{ isAdmin() ? 'Surveillez et bloquez les accès API de la plateforme.' : 'Créez les clés utilisées par votre serveur pour initier les paiements.' }}</p>
+            <h1>{{ isAdmin() ? 'Intégrations marchands' : 'Intégration' }}</h1>
+            <p>{{ isAdmin() ? 'Suivez la configuration des intégrations marchands.' : 'Configurez les agrégateurs, le webhook et le parcours nécessaires à votre intégration.' }}</p>
         </div>
         <div class="fp-actions">
             <a class="fp-btn fp-btn-secondary" routerLink="/api-docs">Documentation publique</a>
-            <button class="fp-btn fp-btn-secondary" (click)="toggleEnvironment()">
-                {{ currentEnvironment === 'sandbox' ? 'Voir Live' : 'Voir Sandbox' }}
-            </button>
         </div>
     </header>
 
@@ -32,125 +29,161 @@
         </div>
     </div>
 
-    <div class="fp-tabs">
-        <button type="button" [class.active]="currentEnvironment === 'sandbox'" (click)="setEnvironment('sandbox')">Sandbox</button>
-        <button type="button" [class.active]="currentEnvironment === 'live'" (click)="setEnvironment('live')">Live</button>
-    </div>
-
-    <section class="fp-panel" *ngIf="!isAdmin()">
+    <section class="fp-panel integration-guide-panel" *ngIf="!isAdmin()">
         <div class="fp-panel-header">
             <div>
-                <h2>Créer une clé {{ currentEnvironment }}</h2>
-                <p>Le secret est affiché une seule fois. Gardez-le côté serveur uniquement.</p>
+                <h2>Progression de l'intégration</h2>
+                <p>Cette checklist se met à jour à partir de la configuration et des paiements enregistrés.</p>
             </div>
+            <div class="readiness-progress">{{ integrationCompletedCount() }}/4 étapes validées</div>
         </div>
-        <form class="fp-inline-form" (ngSubmit)="generateNewKey()">
-            <label>
-                Nom de la clé
-                <input name="keyName" type="text" [(ngModel)]="newKeyName" minlength="3" maxlength="100" placeholder="Backend production" required>
-            </label>
-            <button class="fp-btn fp-btn-primary" type="submit" [disabled]="isCreatingKey() || !newKeyName.trim()">
-                {{ isCreatingKey() ? 'Création...' : 'Créer la clé' }}
+        <div class="integration-checklist">
+            <article class="readiness-step" [class.done]="hasActiveKey()">
+                <span class="step-state material-icons-outlined">{{ hasActiveKey() ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                <div>
+                    <h3>Clé API</h3>
+                    <p>{{ hasActiveKey() ? 'Une clé active est prête.' : 'Créez la clé que votre serveur utilisera pour appeler FidelityPay.' }}</p>
+                </div>
+                <a class="fp-btn fp-btn-secondary" *ngIf="!hasActiveKey()" routerLink="/api-keys">Créer</a>
+            </article>
+            <article class="readiness-step" [class.done]="hasEnabledProvider()">
+                <span class="step-state material-icons-outlined">{{ hasEnabledProvider() ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                <div>
+                    <h3>Agrégateur</h3>
+                    <p>{{ hasEnabledProvider() ? providerSetupSummary() : 'Ajoutez les identifiants Sandbox ou Live d’au moins un agrégateur.' }}</p>
+                </div>
+                <button class="fp-btn fp-btn-secondary" type="button" *ngIf="!hasEnabledProvider()" (click)="scrollToSection('provider-setup')">Configurer</button>
+            </article>
+            <article class="readiness-step" [class.done]="webhookConfigured()">
+                <span class="step-state material-icons-outlined">{{ webhookConfigured() ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                <div>
+                    <h3>Webhook marchand</h3>
+                    <p>{{ webhookConfigured() ? 'Un webhook actif recevra les changements d’état.' : 'Configurez une URL HTTPS pour recevoir le résultat final.' }}</p>
+                </div>
+                <button class="fp-btn fp-btn-secondary" type="button" *ngIf="!webhookConfigured()" (click)="scrollToSection('webhook-setup')">Configurer</button>
+            </article>
+            <article class="readiness-step" [class.done]="hasSuccessfulDashboardTest()">
+                <span class="step-state material-icons-outlined">{{ hasSuccessfulDashboardTest() ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                <div>
+                    <h3>Test dashboard réussi</h3>
+                    <p>{{ hasSuccessfulDashboardTest() ? 'Un paiement initié depuis le banc de test a atteint SUCCESS.' : 'Cette étape est validée uniquement après un test dashboard terminé avec le statut SUCCESS.' }}</p>
+                </div>
+                <a class="fp-btn fp-btn-secondary" routerLink="/payment-test">{{ hasSuccessfulDashboardTest() ? 'Retester' : 'Lancer un test' }}</a>
+            </article>
+            <article class="readiness-step api-ready-step" [class.done]="integrationReadyForApi()">
+                <span class="step-state material-icons-outlined">{{ integrationReadyForApi() ? 'rocket_launch' : 'lock' }}</span>
+                <div>
+                    <h3>API Live</h3>
+                    <p>{{ integrationReadyForApi() ? 'La pré-intégration est validée. Vous pouvez brancher votre serveur sur l’API Live.' : 'Validez les quatre étapes pour considérer l’intégration prête.' }}</p>
+                </div>
+                <a class="fp-btn fp-btn-secondary" routerLink="/api-docs">Documentation</a>
+            </article>
+        </div>
+    </section>
+
+    <section class="fp-panel provider-panel" id="provider-setup" *ngIf="!isAdmin()">
+        <div class="fp-panel-header">
+            <div>
+                <h2>Liste des Agrégateurs</h2>
+                <p>{{ providerSetupSummary() }}</p>
+            </div>
+            <button class="fp-btn fp-btn-primary" type="button" *ngIf="canAddNewProviderAccount()" (click)="openProviderAccountModal()">
+                Ajouter un agrégateur
             </button>
-        </form>
-        <p class="fp-error" *ngIf="createError()">{{ createError() }}</p>
-    </section>
-
-    <section class="fp-panel" *ngIf="createdKey() as key">
-        <div class="fp-panel-header">
-            <div>
-                <h2>Secret généré</h2>
-                <p>Copiez cette valeur maintenant. Elle ne sera plus affichée après fermeture.</p>
-            </div>
-            <button class="fp-btn fp-btn-secondary" type="button" (click)="closeCreatedKey()">Fermer</button>
         </div>
-        <div class="fp-secret-grid">
-            <div>
-                <span>Public key</span>
-                <code>{{ key.publicKey }}</code>
-                <button class="fp-copy" type="button" (click)="copyToClipboard(key.publicKey)">Copier</button>
-            </div>
-            <div>
-                <span>Secret key</span>
-                <code>{{ key.secretKey }}</code>
-                <button class="fp-copy" type="button" (click)="copyToClipboard(key.secretKey || '')">Copier</button>
-            </div>
-        </div>
-    </section>
-
-    <section class="fp-panel">
-        <div class="fp-panel-header">
-            <div>
-                <h2>Clés {{ currentEnvironment }}</h2>
-                <p>{{ filteredKeys().length }} clé(s) pour cet environnement.</p>
-            </div>
-        </div>
+        <p class="webhook-status" *ngIf="providerActionMessage()">{{ providerActionMessage() }}</p>
 
         <div class="fp-table-wrap">
             <table class="fp-table">
                 <thead>
                     <tr>
-                        <th>{{ isAdmin() ? 'Utilisateur' : 'Nom' }}</th>
-                        <th>Public key</th>
-                        <th>Secret</th>
+                        <th>Agrégateur</th>
+                        <th>Environnement</th>
+                        <th>Routes</th>
                         <th>Statut</th>
-                        <th>Dernier usage</th>
-                        <th>Créée</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let key of paginatedKeys()">
+                    <tr class="provider-row" *ngFor="let row of providerRows()" tabindex="0" (click)="openProviderRoutes(row.provider.id)" (keydown.enter)="openProviderRoutes(row.provider.id)">
                         <td>
-                            <div class="fp-stack" *ngIf="isAdmin(); else keyName">
-                                <strong>{{ key.userFullName || 'Utilisateur inconnu' }}</strong>
-                                <span>{{ key.userEmail || 'N/A' }}</span>
+                            <div class="fp-stack">
+                                <strong>{{ row.provider.displayName }}</strong>
+                                <span>{{ row.provider.code }}</span>
                             </div>
-                            <ng-template #keyName>{{ key.name }}</ng-template>
                         </td>
                         <td>
-                            <code class="fp-mono">{{ key.publicKey }}</code>
+                            <span class="fp-badge neutral">{{ row.environments }}</span>
                         </td>
+                        <td>{{ row.routeCount }} route(s)</td>
                         <td>
-                            <code class="fp-mono">{{ key.secretKeyMasked }}</code>
-                        </td>
-                        <td>
-                            <span class="fp-badge" [class.success]="key.isActive" [class.neutral]="!key.isActive">
-                                {{ key.isActive ? 'Active' : 'Inactive' }}
+                            <span class="fp-badge" [class.success]="row.enabledCount > 0" [class.neutral]="row.enabledCount === 0">
+                                {{ row.enabledCount > 0 ? 'Actif' : 'Non configuré' }}
                             </span>
                         </td>
-                        <td>{{ key.lastUsedAt ? (key.lastUsedAt | date: 'dd MMM yyyy HH:mm') : 'Jamais' }}</td>
-                        <td>{{ key.createdAt | date: 'dd MMM yyyy' }}</td>
-                        <td>
+                        <td (click)="$event.stopPropagation()">
                             <div class="fp-row-actions">
-                                <button class="fp-icon-btn" type="button" title="Copier la clé publique" (click)="copyToClipboard(key.publicKey)">Copier</button>
-                                <button class="fp-icon-btn danger" type="button" *ngIf="key.isActive" title="Révoquer" (click)="revokeKey(key.id)">Révoquer</button>
-                                <button class="fp-icon-btn" type="button" *ngIf="isAdmin() && !key.isActive" title="Réactiver" (click)="activateKey(key.id)">Activer</button>
-                                <button class="fp-icon-btn danger" type="button" *ngIf="isAdmin()" title="Supprimer" (click)="deleteKey(key.id)">Supprimer</button>
+                                <button class="fp-icon-btn" type="button" (click)="openProviderRoutes(row.provider.id)">Voir les routes</button>
+                                <button class="fp-icon-btn" type="button" *ngIf="!accountFor(row.provider.id, 'SANDBOX')" (click)="openProviderAccountModal(row.provider, 'SANDBOX')">Ajouter Sandbox</button>
+                                <button class="fp-icon-btn" type="button" *ngIf="!accountFor(row.provider.id, 'LIVE')" (click)="openProviderAccountModal(row.provider, 'LIVE')">Ajouter Live</button>
+                                <button class="fp-icon-btn danger" type="button" *ngFor="let account of row.accounts" [disabled]="deletingProviderAccountId() === account.id" (click)="$event.stopPropagation(); requestProviderAccountDeletion(account)">
+                                    Supprimer {{ formatEnvironment(account.environment) }}
+                                </button>
                             </div>
                         </td>
                     </tr>
-                    <tr *ngIf="paginatedKeys().length === 0">
-                        <td colspan="7">
-                            <div class="fp-empty">Aucune clé {{ currentEnvironment }} pour le moment.</div>
+                    <tr *ngIf="providerRows().length === 0">
+                        <td colspan="5">
+                            <div class="fp-empty">Aucun agrégateur disponible.</div>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <div class="pagination-container" *ngIf="filteredKeys().length > 0">
-            <div class="pagination-info">
-                <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> -
-                <strong>{{ Math.min(currentPage() * pageSize(), filteredKeys().length) }}</strong>
-                sur <strong>{{ filteredKeys().length }}</strong>
+    </section>
+
+    <section class="fp-panel webhook-panel" id="webhook-setup" *ngIf="!isAdmin()">
+        <div class="fp-panel-header">
+            <div>
+                <h2>Webhook marchand</h2>
+                <p>FidelityPay envoie les notifications de paiement vers cette URL. Les callbacks PayDunya/Kkiapay restent internes à FidelityPay.</p>
             </div>
-            <div class="pagination-controls">
-                <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">‹</button>
-                <button class="btn-pagination active">{{ currentPage() }}</button>
-                <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">›</button>
+            <button class="fp-btn fp-btn-secondary" type="button" *ngIf="webhookConfigured() && !isEditingWebhook()" (click)="editWebhook()">Modifier</button>
+        </div>
+
+        <div class="saved-webhook" *ngIf="webhookConfigured() && !isEditingWebhook()">
+            <div>
+                <span>URL active</span>
+                <strong>{{ webhookUrl() }}</strong>
+            </div>
+            <span class="fp-badge success">Actif</span>
+        </div>
+
+        <form class="fp-inline-form webhook-form" *ngIf="!webhookConfigured() || isEditingWebhook()" (ngSubmit)="saveWebhookSettings()">
+            <label>
+                URL HTTPS du webhook
+                <input name="webhookUrl" type="url" [value]="webhookUrl()" (input)="updateWebhookUrl($event)" placeholder="https://votre-api.com/webhooks/fidelity-pay" required>
+            </label>
+            <div class="webhook-form-actions">
+                <button class="fp-btn fp-btn-secondary" type="button" *ngIf="webhookConfigured()" [disabled]="isSavingWebhook()" (click)="cancelWebhookEdit()">Annuler</button>
+                <button class="fp-btn fp-btn-primary" type="submit" [disabled]="isSavingWebhook()">
+                    {{ isSavingWebhook() ? 'Enregistrement...' : (webhookConfigured() ? 'Enregistrer' : 'Créer le webhook') }}
+                </button>
+            </div>
+        </form>
+        <p class="webhook-events">
+            Événements actifs: <code>payment.success</code>, <code>payment.failed</code>, <code>payment.cancelled</code>, <code>payment.requires_action</code>, <code>payment.reconciliation</code>
+        </p>
+        <div class="fp-secret-grid webhook-secret" *ngIf="createdWebhookSecret() as secret">
+            <div>
+                <span>Webhook secret</span>
+                <code>{{ secret }}</code>
+                <button class="fp-copy" type="button" (click)="copyToClipboard(secret)">Copier</button>
             </div>
         </div>
+        <p class="webhook-secret-note" *ngIf="createdWebhookSecret()">Copiez ce secret maintenant. Il sert à vérifier la signature des webhooks et ne sera affiché qu'à la création.</p>
+        <p class="webhook-status" *ngIf="webhookStatusMessage()">{{ webhookStatusMessage() }}</p>
     </section>
 
     <section class="fp-panel">
@@ -162,9 +195,8 @@
         </div>
         <pre class="fp-code"><code>curl -X POST http://localhost:8060/api/v1/payments/initiate \
   -H "Content-Type: application/json" \
-  -H "X-API-Public-Key: {{ firstKey() }}" \
-  -H "X-API-Secret-Key: sk_{{ currentEnvironment }}_YOUR_SECRET" \
-  -H "Idempotency-Key: order-1001" \
+  -H "X-API-Key: VOTRE_CLE_API" \
+  -H "Idempotency-Key: VOTRE_REFERENCE_UNIQUE" \
   -d '&#123;
     "amount": 5000,
     "country": "SN",
@@ -179,4 +211,120 @@
     "cancelUrl": "https://merchant.example/cancel"
   &#125;'</code></pre>
     </section>
+
+    <div class="provider-modal-backdrop" *ngIf="isProviderModalOpen()">
+        <section class="provider-modal" role="dialog" aria-modal="true" aria-labelledby="provider-modal-title">
+            <header class="provider-modal-header">
+                <div class="provider-modal-heading">
+                    <span class="provider-modal-icon material-icons-outlined" aria-hidden="true">account_tree</span>
+                    <div>
+                        <span class="provider-modal-kicker">Connexion fournisseur</span>
+                        <h2 id="provider-modal-title">Configurer un agrégateur</h2>
+                        <p>Associez les identifiants correspondant à l'environnement sélectionné.</p>
+                    </div>
+                </div>
+                <button class="provider-modal-close" type="button" title="Fermer" aria-label="Fermer" (click)="closeProviderAccountModal()">
+                    <span class="material-icons-outlined" aria-hidden="true">close</span>
+                </button>
+            </header>
+
+            <form class="provider-form" (ngSubmit)="saveProviderAccount()">
+                <div class="provider-form-body">
+                    <section class="provider-form-section">
+                        <div class="provider-section-heading">
+                            <h3>Connexion</h3>
+                            <p>Choisissez le compte et l'environnement à relier.</p>
+                        </div>
+                        <div class="form-grid">
+                            <div class="field-group">
+                                <span class="field-label">Agrégateur</span>
+                                <div class="provider-menu-control">
+                                    <button class="provider-menu-trigger" type="button" [attr.aria-expanded]="isProviderMenuOpen()" (click)="toggleProviderMenu()">
+                                        <span class="provider-mark" aria-hidden="true">{{ selectedProviderForForm()?.displayName?.charAt(0) }}</span>
+                                        <span>{{ selectedProviderForForm()?.displayName }}</span>
+                                        <span class="material-icons-outlined" aria-hidden="true">expand_more</span>
+                                    </button>
+                                    <div class="provider-menu" role="menu" *ngIf="isProviderMenuOpen()" (keydown.escape)="isProviderMenuOpen.set(false)">
+                                        <button type="button" role="menuitem" *ngFor="let provider of providers()"
+                                            [class.selected]="providerAccountForm.providerId === provider.id"
+                                            (click)="chooseProvider(provider)">
+                                            <span class="provider-mark" aria-hidden="true">{{ provider.displayName.charAt(0) }}</span>
+                                            <span>{{ provider.displayName }}</span>
+                                            <span class="material-icons-outlined selected-icon" *ngIf="providerAccountForm.providerId === provider.id" aria-hidden="true">check</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <label>
+                                Environnement
+                                <span class="environment-control" role="group" aria-label="Environnement">
+                                    <button type="button" *ngFor="let env of providerEnvironmentChoices"
+                                        [class.active]="providerAccountForm.environment === env"
+                                        (click)="providerAccountForm.environment = env">
+                                        <span class="environment-dot" aria-hidden="true"></span>
+                                        {{ formatEnvironment(env) }}
+                                    </button>
+                                </span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="provider-form-section credentials-section">
+                        <div class="provider-section-heading credentials-heading">
+                            <div>
+                                <h3>Identifiants API</h3>
+                                <p>Renseignez uniquement les clés utilisées par FidelityPay.</p>
+                            </div>
+                            <span class="environment-badge">{{ formatEnvironment(providerAccountForm.environment) }}</span>
+                        </div>
+                        <div class="credential-grid" [class.single-field]="providerCredentialFields.length === 1">
+                            <label *ngFor="let field of providerCredentialFields">
+                                <span>{{ field.label }}</span>
+                                <div class="credential-input">
+                                    <span class="material-icons-outlined" aria-hidden="true">key</span>
+                                    <input [name]="field.key" type="password" [(ngModel)]="providerAccountForm.credentials[field.key]" [required]="field.required === true" autocomplete="off">
+                                </div>
+                            </label>
+                        </div>
+                    </section>
+
+                    <p class="fp-error provider-form-error" *ngIf="providerFormError()">{{ providerFormError() }}</p>
+                </div>
+
+                <footer class="modal-actions">
+                    <button class="fp-btn fp-btn-secondary" type="button" [disabled]="isSavingProviderAccount()" (click)="closeProviderAccountModal()">Annuler</button>
+                    <button class="fp-btn fp-btn-primary" type="submit" [disabled]="isSavingProviderAccount()">
+                        <span class="material-icons-outlined" aria-hidden="true">save</span>
+                        {{ isSavingProviderAccount() ? 'Enregistrement...' : 'Enregistrer' }}
+                    </button>
+                </footer>
+            </form>
+        </section>
+    </div>
+
+    <div class="provider-modal-backdrop" *ngIf="providerAccountPendingDeletion() as account">
+        <section class="provider-modal confirmation-modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-provider-title">
+            <div class="confirmation-content">
+                <div class="confirmation-heading">
+                    <span class="provider-modal-icon danger material-icons-outlined" aria-hidden="true">delete_outline</span>
+                    <div class="confirmation-copy">
+                        <h2 id="delete-provider-title">Supprimer cette configuration ?</h2>
+                        <span class="confirmation-account">{{ account.providerDisplayName }} · {{ formatEnvironment(account.environment) }}</span>
+                    </div>
+                    <button class="provider-modal-close" type="button" title="Fermer" aria-label="Fermer"
+                        [disabled]="deletingProviderAccountId() === account.id" (click)="cancelProviderAccountDeletion()">
+                        <span class="material-icons-outlined" aria-hidden="true">close</span>
+                    </button>
+                </div>
+                <p class="confirmation-message">Les identifiants enregistrés seront supprimés. Cet environnement ne sera plus utilisé pour les paiements.</p>
+                <div class="confirmation-actions">
+                    <button class="fp-btn fp-btn-secondary" type="button" [disabled]="deletingProviderAccountId() === account.id" (click)="cancelProviderAccountDeletion()">Annuler</button>
+                    <button class="fp-btn delete-confirm-button" type="button" [disabled]="deletingProviderAccountId() === account.id" (click)="confirmProviderAccountDeletion()">
+                        <span class="material-icons-outlined" aria-hidden="true">delete</span>
+                        {{ deletingProviderAccountId() === account.id ? 'Suppression...' : 'Supprimer' }}
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
 </div>

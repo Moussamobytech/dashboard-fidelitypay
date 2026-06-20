@@ -1,128 +1,114 @@
-<div class="page-header">
-    <div>
-        <h1>Intelligence de Routage</h1>
-        <p class="subtitle">Optimisez vos transactions par coût, vitesse et fiabilité</p>
-    </div>
-</div>
+<div class="routing-container">
+    <header class="page-header">
+        <div>
+            <h1>Intelligence de Routage</h1>
+            <p class="subtitle">Visualisez les routes, fallback disponibles, coûts, latences et taux de succès.</p>
+        </div>
+        <button class="btn btn-outline" type="button" (click)="loadRoutes()">
+            <span class="material-icons-outlined">refresh</span>
+            Actualiser
+        </button>
+    </header>
 
-<div class="routing-grid">
-    <div class="card full-width">
+    <section class="stats-grid">
+        <article class="stat-card active">
+            <span class="material-icons-outlined">check_circle</span>
+            <div>
+                <small>Routes actives</small>
+                <strong>{{ activeRoutes() }}</strong>
+            </div>
+        </article>
+        <article class="stat-card degraded">
+            <span class="material-icons-outlined">warning</span>
+            <div>
+                <small>Routes dégradées</small>
+                <strong>{{ degradedRoutes() }}</strong>
+            </div>
+        </article>
+    </section>
+
+    <section class="card">
         <div class="card-header">
-            <h3>Priorisation des Routes</h3>
-            <button class="btn btn-primary btn-sm">Nouvelle Règle</button>
+            <h3>Priorisation et fallback</h3>
+            <span>{{ sortedRoutes().length }} routes</span>
         </div>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
                         <th>Pays</th>
-                        <th>Opérateur Principal</th>
+                        <th>Opérateur</th>
+                        <th>Provider</th>
                         <th>Priorité</th>
-                        <th>Stratégie</th>
-                        <th>Fallback</th>
-                        <th>Status</th>
+                        <th>Fallback disponible</th>
+                        <th>Coût</th>
+                        <th>Latence</th>
+                        <th>Succès</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @for (rule of paginatedRules(); track rule.operator) {
-                    <tr>
-                        <td>{{ rule.country }}</td>
-                        <td><strong>{{ rule.operator }}</strong></td>
-                        <td><span class="priority-badge">#{{ rule.priority }}</span></td>
-                        <td>{{ rule.strategy }}</td>
-                        <td>{{ rule.fallback }}</td>
-                        <td>
-                            <span class="badge" [class.badge-success]="rule.status === 'Actif'"
-                                [class.badge-warning]="rule.status === 'Alerte'">
-                                {{ rule.status }}
-                            </span>
-                        </td>
+                    <tr *ngFor="let route of paginatedRoutes()">
+                        <td>{{ route.country }}</td>
+                        <td>{{ route.operator }}</td>
+                        <td><strong>{{ route.providerCode }}</strong></td>
+                        <td><span class="priority-badge">#{{ route.effectivePriority }}</span></td>
+                        <td>{{ fallbackFor(route) }}</td>
+                        <td>{{ route.cost | number:'1.0-2' }}</td>
+                        <td>{{ formatLatency(route.avgLatency) }}</td>
+                        <td>{{ successRate(route) }}</td>
                     </tr>
-                    }
+                    <tr *ngIf="!isLoading() && paginatedRoutes().length === 0">
+                        <td colspan="8" class="empty-state">Aucune route active disponible.</td>
+                    </tr>
+                    <tr *ngIf="isLoading()">
+                        <td colspan="8" class="empty-state">Chargement des routes...</td>
+                    </tr>
                 </tbody>
             </table>
+        </div>
 
-            <!-- Pagination System -->
-            <div class="pagination-container" *ngIf="routingRules().length > 0">
-                <div class="pagination-info">
-                    Affichage de <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> à
-                    <strong>{{ Math.min(currentPage() * pageSize(), routingRules().length) }}</strong> sur
-                    <strong>{{ routingRules().length }}</strong> règles
-                </div>
-                <div class="pagination-controls">
-                    <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">
-                        <span class="material-icons-outlined">chevron_left</span>
-                    </button>
-
-                    <div class="page-numbers">
-                        @for (p of pages(); track p) {
-                        <button class="btn-pagination" [class.active]="currentPage() === p" (click)="setPage(p)">
-                            {{ p }}
-                        </button>
-                        }
-                    </div>
-
-                    <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
-                        <span class="material-icons-outlined">chevron_right</span>
-                    </button>
-                </div>
+        <div class="pagination-container" *ngIf="sortedRoutes().length > pageSize()">
+            <div class="pagination-info">
+                Page <strong>{{ currentPage() }}</strong> sur <strong>{{ totalPages() }}</strong>
+            </div>
+            <div class="pagination-controls">
+                <button class="btn-pagination" [disabled]="currentPage() === 1" (click)="prevPage()">
+                    <span class="material-icons-outlined">chevron_left</span>
+                </button>
+                <button class="btn-pagination active">{{ currentPage() }}</button>
+                <button class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+                    <span class="material-icons-outlined">chevron_right</span>
+                </button>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="card">
+    <section class="card performance-card">
         <div class="card-header">
-            <h3>Comparatif Performance</h3>
+            <h3>Comparatif providers</h3>
+            <span>Moyennes calculées sur les routes visibles</span>
         </div>
-        <div class="perf-list">
-            @for (data of performanceData; track data.route) {
-            <div class="perf-item">
-                <div class="route-name">{{ data.route }}</div>
+        <div class="provider-list">
+            <article class="provider-row" *ngFor="let provider of providerPerformance()">
+                <div>
+                    <strong>{{ provider.provider }}</strong>
+                    <span>{{ provider.enabled }}/{{ provider.routes }} routes actives</span>
+                </div>
                 <div class="metrics">
-                    <div class="metric">
-                        <span class="label">Coût</span>
-                        <span class="val">{{ data.cost }}</span>
+                    <div>
+                        <small>Coût</small>
+                        <strong>{{ provider.avgCost | number:'1.0-2' }}</strong>
                     </div>
-                    <div class="metric">
-                        <span class="label">Latence</span>
-                        <span class="val">{{ data.latency }}</span>
+                    <div>
+                        <small>Latence</small>
+                        <strong>{{ formatLatency(provider.avgLatency) }}</strong>
                     </div>
-                    <div class="metric">
-                        <span class="label">Succès</span>
-                        <span class="val success">{{ data.success }}</span>
+                    <div>
+                        <small>Succès</small>
+                        <strong>{{ provider.avgSuccessRate | number:'1.0-1' }}%</strong>
                     </div>
                 </div>
-            </div>
-            }
+            </article>
         </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">
-            <h3>Configuration Fallback</h3>
-        </div>
-        <div class="fallback-settings">
-            <div class="setting-item">
-                <div class="info">
-                    <p class="title">Bascule Automatique</p>
-                    <p class="desc">Active le passage au fallback après échec</p>
-                </div>
-                <div class="toggle active"></div>
-            </div>
-            <div class="setting-item">
-                <div class="info">
-                    <p class="title">Retry Intelligent</p>
-                    <p class="desc">3 tentatives pour les codes erreurs 5xx</p>
-                </div>
-                <div class="toggle active"></div>
-            </div>
-            <div class="setting-item">
-                <div class="info">
-                    <p class="title">Timeout Critique</p>
-                    <p class="desc">Basculer si pas de réponse après 10s</p>
-                </div>
-                <div class="val-box">10s</div>
-            </div>
-        </div>
-    </div>
+    </section>
 </div>

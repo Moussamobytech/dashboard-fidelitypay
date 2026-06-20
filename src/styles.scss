@@ -380,6 +380,10 @@ button {
   }
 }
 
+.fp-secret-grid.single-key {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .fp-table-wrap {
   margin-top: 1rem;
   overflow-x: auto;

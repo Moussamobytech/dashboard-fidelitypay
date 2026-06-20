@@ -113,6 +113,24 @@ export class AuthService {
         return this._currentUser()?.token ?? null;
     }
 
+    isTokenExpired(token: string | null = this.getToken()): boolean {
+        if (!token) {
+            return true;
+        }
+        try {
+            const payloadPart = token.split('.')[1];
+            if (!payloadPart) {
+                return true;
+            }
+            const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+            const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+            const payload = JSON.parse(atob(padded)) as { exp?: number };
+            return !payload.exp || payload.exp * 1000 <= Date.now();
+        } catch {
+            return true;
+        }
+    }
+
     private saveSession(response: AuthResponse): void {
         const user: CurrentUser = {
             userId: response.userId,

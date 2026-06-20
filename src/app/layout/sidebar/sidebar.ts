@@ -18,21 +18,22 @@ export class SidebarComponent {
     const role = this.authService.userRole();
     const items = [];
 
-    if (role === 'DEVELOPER') {
-      items.push({ icon: 'dashboard', label: 'Dashboard', route: '/developer-dashboard' });
-      items.push({ icon: 'payments', label: 'Transactions', route: '/developer-transactions' });
-      items.push({ icon: 'router', label: 'Monitoring', route: '/developer-monitoring' });
-      items.push({ icon: 'code', label: 'Intégration & Clés', route: '/developers' });
-      items.push({ icon: 'account_tree', label: 'Agrégateurs', route: '/aggregators' });
-    } else {
+    if (role === 'ADMIN') {
       items.push({ icon: 'dashboard', label: 'Dashboard', route: '/dashboard' });
       items.push({ icon: 'payments', label: 'Transactions', route: '/transactions' });
-      items.push({ icon: 'router', label: 'Monitoring', route: '/monitoring' });
+      items.push({ icon: 'insights', label: 'Analytics', route: '/analytics' });
+      items.push({ icon: 'alt_route', label: 'Routage', route: '/routing' });
       items.push({ icon: 'code', label: 'Développeurs', route: '/developers' });
-      if (role === 'ADMIN') {
-        items.push({ icon: 'people', label: 'Utilisateurs', route: '/users' });
-        items.push({ icon: 'account_tree', label: 'Agrégateurs', route: '/aggregators' });
-      }
+      items.push({ icon: 'vpn_key', label: 'Clés API', route: '/api-keys' });
+      items.push({ icon: 'people', label: 'Utilisateurs', route: '/users' });
+    } else {
+      items.push({ icon: 'dashboard', label: 'Dashboard', route: '/developer-dashboard' });
+      items.push({ icon: 'payments', label: 'Transactions', route: '/developer-transactions' });
+      items.push({ icon: 'insights', label: 'Analytics', route: '/analytics' });
+      items.push({ icon: 'alt_route', label: 'Routage', route: '/routing' });
+      items.push({ icon: 'code', label: 'Intégration', route: '/developers' });
+      items.push({ icon: 'vpn_key', label: 'Clés API', route: '/api-keys' });
+      items.push({ icon: 'play_circle', label: 'Tester paiement', route: '/payment-test' });
     }
 
     return items;

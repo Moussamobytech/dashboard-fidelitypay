@@ -1,8 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MonitoringService } from '../../../core/services/monitoring.service';
 import { PaymentService } from '../../../core/services/payment.service';
-import { Route } from '../../../core/models/route.model';
 import { Payment, PaymentStatus } from '../../../core/models/payment.model';
 
 @Component({
@@ -13,7 +11,6 @@ import { Payment, PaymentStatus } from '../../../core/models/payment.model';
     styleUrls: ['./overview.scss']
 })
 export class DashboardOverviewComponent implements OnInit {
-    private monitoringService = inject(MonitoringService);
     private paymentService = inject(PaymentService);
 
     stats = signal([
@@ -24,7 +21,6 @@ export class DashboardOverviewComponent implements OnInit {
     ]);
 
     recentTransactions = signal<any[]>([]);
-    routesStatus = signal<any[]>([]);
     Math = Math;
 
     // Pagination
@@ -36,7 +32,6 @@ export class DashboardOverviewComponent implements OnInit {
     selectedPeriod = signal<'24h' | 'week' | 'month'>('24h');
 
     ngOnInit() {
-        this.loadRoutes();
         this.loadRecentPayments();
     }
 
@@ -47,10 +42,8 @@ export class DashboardOverviewComponent implements OnInit {
     }
 
     loadRecentPayments() {
-        console.log('Loading recent payments...');
         this.paymentService.getRecentPayments().subscribe({
             next: (payments: Payment[]) => {
-                console.log('Payments received:', payments);
                 if (!payments || !Array.isArray(payments)) {
                     console.warn('Received invalid data format for payments');
                     return;
@@ -210,15 +203,6 @@ export class DashboardOverviewComponent implements OnInit {
         return date.toLocaleDateString();
     }
 
-    loadRoutes() {
-        this.monitoringService.getRoutes().subscribe({
-            next: (routes: Route[]) => {
-                this.routesStatus.set(routes);
-            },
-            error: (err) => console.error('Dashboard Monitoring Error:', err)
-        });
-    }
-
     getCountry(value: string): string {
         const name = (value || '').toUpperCase();
         if (name.includes('SN') || name.includes('SENEGAL')) return 'Sénégal';
@@ -242,5 +226,3 @@ export class DashboardOverviewComponent implements OnInit {
         return 'payments';
     }
 }
-
-

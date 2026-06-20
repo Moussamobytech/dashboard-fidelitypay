@@ -1,0 +1,85 @@
+<main class="provider-routes-page">
+    <header class="page-header">
+        <div>
+            <a class="back-link" routerLink="/developers">
+                <span class="material-icons-outlined">arrow_back</span>
+                Intégration & Clés
+            </a>
+            <p class="eyebrow">Routes couvertes</p>
+            <h1>{{ provider()?.displayName || 'Agrégateur' }}</h1>
+            <p>Consultez les pays, opérateurs et flux disponibles pour cet agrégateur.</p>
+        </div>
+        <span class="provider-code" *ngIf="provider() as currentProvider">{{ currentProvider.code }}</span>
+    </header>
+
+    <section class="filters" *ngIf="!isLoading() && !errorMessage()">
+        <label>
+            Pays
+            <app-fp-select icon="public" ariaLabel="Pays" [value]="countryFilter()" [options]="countryOptions()"
+                (valueChange)="updateCountry($event)"></app-fp-select>
+        </label>
+        <label>
+            Opérateur
+            <app-fp-select icon="account_balance_wallet" ariaLabel="Opérateur" [value]="operatorFilter()" [options]="operatorOptions()"
+                (valueChange)="updateOperator($event)"></app-fp-select>
+        </label>
+        <strong>{{ filteredRoutes().length }} route(s)</strong>
+    </section>
+
+    <p class="state-message error action-error" *ngIf="actionError()">{{ actionError() }}</p>
+
+    <p class="state-message" *ngIf="isLoading()">Chargement des routes...</p>
+    <p class="state-message error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+
+    <section class="route-table-wrap" *ngIf="!isLoading() && !errorMessage()">
+        <table>
+            <thead>
+                <tr>
+                    <th>Pays</th>
+                    <th>Opérateur</th>
+                    <th>Flux</th>
+                    <th>Disponibilité</th>
+                    <th>Priorité</th>
+                    <th>État</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let route of filteredRoutes()">
+                    <td>{{ countryName(route.country) }}</td>
+                    <td>{{ route.operator }}</td>
+                    <td><code>{{ route.flowType }}</code></td>
+                    <td>
+                        <div class="capability-list">
+                            <span class="capability-badge" *ngIf="route.liveEnabled">Live</span>
+                            <span class="capability-badge sandbox" *ngIf="route.sandboxEnabled">Sandbox</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="priority-editor">
+                            <input type="number" min="1" step="1" [(ngModel)]="priorityDrafts[route.routeId]" [disabled]="savingRouteId() === route.routeId">
+                            <button type="button" title="Enregistrer la priorité" [disabled]="savingRouteId() === route.routeId" (click)="savePriority(route)">
+                                <span class="material-icons-outlined">save</span>
+                            </button>
+                        </div>
+                    </td>
+                    <td>
+                        <button
+                            class="route-switch"
+                            type="button"
+                            role="switch"
+                            [class.on]="route.effectiveEnabled"
+                            [attr.aria-checked]="route.effectiveEnabled"
+                            [disabled]="savingRouteId() === route.routeId || !route.platformEnabled"
+                            (click)="toggleRoute(route)">
+                            <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                            <span>{{ route.effectiveEnabled ? 'Active' : 'Inactive' }}</span>
+                        </button>
+                    </td>
+                </tr>
+                <tr *ngIf="filteredRoutes().length === 0">
+                    <td colspan="6" class="empty-state">Aucune route ne correspond à ces filtres.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</main>

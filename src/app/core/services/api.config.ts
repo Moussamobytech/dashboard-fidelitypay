@@ -6,6 +6,7 @@ export const API_V1_ROOT = `${API_ROOT}/v1`;
 export const AUTH_API_BASE = `${API_V1_ROOT}/auth`;
 export const ADMIN_USERS_API = `${API_V1_ROOT}/admin/users`;
 export const DEVELOPER_KEYS_API = `${API_V1_ROOT}/developer/keys`;
+export const DEVELOPER_WEBHOOKS_API = `${API_V1_ROOT}/developer/webhooks`;
 export const ADMIN_DEVELOPERS_API = `${API_V1_ROOT}/admin/developers`;
 export const DEVELOPER_PAYMENT_ROUTES_API = `${API_V1_ROOT}/developer/payment-routes`;
 export const ADMIN_PAYMENT_ROUTES_API = `${API_V1_ROOT}/admin/payment-routes`;

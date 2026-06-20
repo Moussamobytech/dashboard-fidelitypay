@@ -4,11 +4,15 @@
         <p class="subtitle">Activité de votre compte développeur Fidelity Pay</p>
     </div>
     <div class="header-actions">
+        <button class="btn btn-primary" [routerLink]="'/developers'">
+            <span class="material-icons-outlined">science</span>
+            Tester un paiement
+        </button>
         <button class="btn btn-outline" [routerLink]="'/developer-transactions'">
             <span class="material-icons-outlined">receipt_long</span>
             Voir toutes les transactions
         </button>
-        <button class="btn btn-primary" [routerLink]="'/developers'">
+        <button class="btn btn-outline" [routerLink]="'/developers'">
             <span class="material-icons-outlined">vpn_key</span>
             Gérer mes clés API
         </button>
@@ -119,9 +123,11 @@
                     }
                     @if (paginatedTransactions().length === 0) {
                     <tr>
-                        <td colspan="10" class="empty-state">
-                            <span class="material-icons-outlined">receipt_long</span>
-                            <br>Aucune transaction sur cette période
+                        <td colspan="10" class="empty-state-cell">
+                            <div class="empty-state">
+                                <span class="material-icons-outlined">receipt_long</span>
+                                <span>Aucune transaction sur cette période</span>
+                            </div>
                         </td>
                     </tr>
                     }

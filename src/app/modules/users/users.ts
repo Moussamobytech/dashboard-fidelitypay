@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService, User, UserUpdateRequest } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
+import { FpSelectComponent, FpSelectOption } from '../../shared/fp-select/fp-select';
 
 @Component({
     selector: 'app-users',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, FpSelectComponent],
     templateUrl: './users.html',
     styleUrls: ['./users.scss']
 })
@@ -23,6 +24,14 @@ export class UsersComponent implements OnInit {
     editingUser = signal<User | null>(null);
     editForm = signal<UserUpdateRequest>({});
     editCountriesStr = signal('');
+    roleOptions: FpSelectOption[] = [
+        { value: 'ADMIN', label: 'Administrateur' }, { value: 'DEVELOPER', label: 'Développeur' },
+        { value: 'ENTREPRENEUR_CEO', label: 'Entrepreneur / CEO' },
+        { value: 'PRODUCT_MANAGER', label: 'Product manager' }, { value: 'AUTRE', label: 'Autre' }
+    ];
+    accountStatusOptions: FpSelectOption[] = [
+        { value: true, label: 'Actif' }, { value: false, label: 'Inactif' }
+    ];
 
     // Formatting date
     Math = Math;

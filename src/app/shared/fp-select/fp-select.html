@@ -1,0 +1,16 @@
+<div class="fp-select" [class.disabled]="disabled">
+    <button class="fp-select-trigger" type="button" [disabled]="disabled" [attr.aria-label]="ariaLabel"
+        [attr.aria-expanded]="open" aria-haspopup="listbox" (click)="toggle()" (keydown)="onKeydown($event)">
+        <span class="select-mark material-icons-outlined" aria-hidden="true">{{ icon }}</span>
+        <span class="select-label">{{ selectedLabel }}</span>
+        <span class="material-icons-outlined chevron" aria-hidden="true">expand_more</span>
+    </button>
+    <div class="fp-select-menu" role="listbox" *ngIf="open">
+        <button type="button" role="option" *ngFor="let option of options; let index = index"
+            [disabled]="option.disabled" [class.selected]="option.value === value" [class.active]="index === activeIndex"
+            [attr.aria-selected]="option.value === value" (click)="choose(option)">
+            <span>{{ option.label }}</span>
+            <span class="material-icons-outlined selected-icon" *ngIf="option.value === value" aria-hidden="true">check</span>
+        </button>
+    </div>
+</div>

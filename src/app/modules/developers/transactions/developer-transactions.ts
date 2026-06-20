@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { PaymentService } from '../../../core/services/payment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Payment, PaymentStatus } from '../../../core/models/payment.model';
+import { FpSelectComponent, FpSelectOption, FpSelectValue } from '../../../shared/fp-select/fp-select';
 
 @Component({
     selector: 'app-developer-transactions',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, FpSelectComponent],
     templateUrl: './developer-transactions.html',
     styleUrls: ['../../transactions/transactions.scss'] // Reuse main styles
 })
@@ -30,11 +31,29 @@ export class DeveloperTransactionsComponent implements OnInit {
     operator = signal('');
     status = signal('');
     country = signal('');
+    searchTerm = signal('');
 
     // Derived
     operators = computed(() => [...new Set(this.transactions().map(t => t.operator).filter(op => !!op))].sort());
     providers = computed(() => [...new Set(this.transactions().map(t => t.provider).filter(p => !!p))].sort());
     countries = signal<string[]>([]);
+    periodOptions: FpSelectOption[] = [
+        { value: 'all', label: 'Toutes' }, { value: '24h', label: 'Aujourd’hui' },
+        { value: 'week', label: 'Cette semaine' }, { value: 'month', label: 'Ce mois' }
+    ];
+    statusOptions: FpSelectOption[] = [
+        { value: '', label: 'Tous' }, { value: 'SUCCESS', label: 'Succès' },
+        { value: 'FAILED', label: 'Échec' }, { value: 'PENDING', label: 'En cours' },
+        { value: 'REQUIRES_ACTION', label: 'Action requise' }, { value: 'CANCELLED', label: 'Annulé' }
+    ];
+    countryOptions = computed<FpSelectOption[]>(() => [
+        { value: '', label: 'Tous' },
+        ...this.countries().map(country => ({ value: country, label: this.getCountry(country) }))
+    ]);
+    operatorOptions = computed<FpSelectOption[]>(() => [
+        { value: '', label: 'Tous' },
+        ...this.operators().map(operator => ({ value: operator, label: operator }))
+    ]);
 
     // Stats globales du compte
     totalVolume = computed(() =>
@@ -66,6 +85,13 @@ export class DeveloperTransactionsComponent implements OnInit {
         if (this.provider()) list = list.filter(t => t.provider === this.provider());
         if (this.operator()) list = list.filter(t => t.operator === this.operator());
         if (this.status()) list = list.filter(t => t.status === this.status());
+
+        const term = this.searchTerm().trim().toLowerCase();
+        if (term) {
+            list = list.filter(t => [
+                t.countryName, t.country, t.operator, t.provider, t.status, t.flowType
+            ].some(value => String(value || '').toLowerCase().includes(term)));
+        }
 
         if (this.country()) {
             const filterPretty = this.getCountry(this.country()).toUpperCase();
@@ -163,11 +189,29 @@ export class DeveloperTransactionsComponent implements OnInit {
         });
     }
 
-    setPeriod(e: any) { this.period.set(e.target.value); this.currentPage.set(1); }
-    setProvider(e: any) { this.provider.set(e.target.value); this.currentPage.set(1); }
-    setOperator(e: any) { this.operator.set(e.target.value); this.currentPage.set(1); }
-    setStatus(e: any) { this.status.set(e.target.value); this.currentPage.set(1); }
-    setCountry(e: any) { this.country.set(e.target.value); this.currentPage.set(1); }
+    setPeriod(value: FpSelectValue) { this.period.set(String(value)); this.currentPage.set(1); }
+    setOperator(value: FpSelectValue) { this.operator.set(String(value)); this.currentPage.set(1); }
+    setStatus(value: FpSelectValue) { this.status.set(String(value)); this.currentPage.set(1); }
+    setCountry(value: FpSelectValue) { this.country.set(String(value)); this.currentPage.set(1); }
+
+    setSearch(event: Event): void {
+        this.searchTerm.set((event.target as HTMLInputElement).value);
+        this.currentPage.set(1);
+    }
+
+    flowLabel(flowType?: string): string {
+        switch (flowType) {
+            case 'HOSTED_CHECKOUT': return 'Page de paiement';
+            case 'WAVE_REDIRECT': return 'Redirection Wave';
+            case 'ORANGE_CI_OTP': return 'OTP Orange';
+            case 'MOBILE_MONEY_REQUEST': return 'Demande mobile';
+            default: return 'Non renseigné';
+        }
+    }
+
+    copyPaymentLink(transaction: Payment): void {
+        if (transaction.paymentUrl) navigator.clipboard.writeText(transaction.paymentUrl);
+    }
 
     getLatency(txn: any): string {
         const l = txn.providerResponseTimeMs ?? txn.latence ?? txn.routeLatency ?? 0;
