@@ -18,3 +18,4 @@ export const DEVELOPER_PAYMENT_PROVIDERS_API = `${API_V1_ROOT}/developer/payment
 export const DEVELOPER_PROVIDER_ACCOUNTS_API = `${API_V1_ROOT}/developer/provider-accounts`;
 export const ADMIN_PAYMENT_PROVIDER_ROUTES_API = `${API_V1_ROOT}/admin/payment-provider-routes`;
 export const ADMIN_FALLBACK_SETTINGS_API = `${API_V1_ROOT}/admin/routing/fallback-settings`;
+export const DEVELOPER_ROUTING_PREVIEW_API = `${API_V1_ROOT}/developer/routing/preview`;

@@ -66,9 +66,12 @@
                     <td>
                         <span class="flow-cell">
                             {{ flowLabel(txn.flowType) }}
-                            <button *ngIf="txn.paymentUrl" type="button" class="copy-link" title="Copier le lien de paiement"
-                                aria-label="Copier le lien de paiement" (click)="copyPaymentLink(txn)">
-                                <span class="material-icons-outlined">content_copy</span>
+                            <button *ngIf="txn.paymentUrl" type="button" class="copy-link"
+                                [class.copied]="copiedPaymentId() === (txn.paymentId || txn.paymentUrl)"
+                                [title]="copiedPaymentId() === (txn.paymentId || txn.paymentUrl) ? 'Lien copié' : 'Copier le lien de paiement'"
+                                [attr.aria-label]="copiedPaymentId() === (txn.paymentId || txn.paymentUrl) ? 'Lien copié' : 'Copier le lien de paiement'"
+                                (click)="copyPaymentLink(txn)">
+                                <span class="material-icons-outlined">{{ copiedPaymentId() === (txn.paymentId || txn.paymentUrl) ? 'check' : 'content_copy' }}</span>
                             </button>
                         </span>
                     </td>

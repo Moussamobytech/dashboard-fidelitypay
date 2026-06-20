@@ -19,6 +19,7 @@ export class DeveloperTransactionsComponent implements OnInit {
 
     transactions = signal<Payment[]>([]);
     isLoading = signal(true);
+    copiedPaymentId = signal<string | null>(null);
     Math = Math;
 
     // Pagination
@@ -209,8 +210,40 @@ export class DeveloperTransactionsComponent implements OnInit {
         }
     }
 
-    copyPaymentLink(transaction: Payment): void {
-        if (transaction.paymentUrl) navigator.clipboard.writeText(transaction.paymentUrl);
+    async copyPaymentLink(transaction: Payment): Promise<void> {
+        if (!transaction.paymentUrl) return;
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(transaction.paymentUrl);
+            } else {
+                this.copyWithFallback(transaction.paymentUrl);
+            }
+            const paymentId = transaction.paymentId || transaction.paymentUrl;
+            this.copiedPaymentId.set(paymentId);
+            window.setTimeout(() => {
+                if (this.copiedPaymentId() === paymentId) this.copiedPaymentId.set(null);
+            }, 1800);
+        } catch {
+            try {
+                this.copyWithFallback(transaction.paymentUrl);
+                this.copiedPaymentId.set(transaction.paymentId || transaction.paymentUrl);
+                window.setTimeout(() => this.copiedPaymentId.set(null), 1800);
+            } catch {
+                this.copiedPaymentId.set(null);
+            }
+        }
+    }
+
+    private copyWithFallback(value: string): void {
+        const textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        textarea.remove();
+        if (!copied) throw new Error('Clipboard copy failed');
     }
 
     getLatency(txn: any): string {

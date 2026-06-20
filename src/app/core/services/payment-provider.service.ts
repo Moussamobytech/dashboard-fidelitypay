@@ -9,6 +9,7 @@ import {
   ADMIN_PAYMENT_PROVIDER_ROUTES_API,
   DEVELOPER_PAYMENT_ROUTES_API,
   ADMIN_FALLBACK_SETTINGS_API
+  ,DEVELOPER_ROUTING_PREVIEW_API
 } from './api.config';
 
 export interface ProviderIntegration {
@@ -88,6 +89,30 @@ export interface FallbackSettings {
   criticalTimeoutSeconds: number;
 }
 
+export interface RoutingCandidate {
+  rank: number;
+  routeId: number;
+  provider: string;
+  flowType: string;
+  effectivePriority: number;
+  cost: number;
+  avgLatencyMs: number;
+  initiationFailureRate: number;
+  sampleCount: number;
+  sufficientSamples: boolean;
+  score: number;
+}
+
+export interface RoutingPreview {
+  country: string;
+  operator: string;
+  environment: string;
+  scoringVersion: string;
+  evaluatedAt: string;
+  selected: RoutingCandidate | null;
+  candidates: RoutingCandidate[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class PaymentProviderService {
   private http = inject(HttpClient);
@@ -151,5 +176,11 @@ export class PaymentProviderService {
 
   updateFallbackSettings(settings: FallbackSettings): Observable<FallbackSettings> {
     return this.http.put<FallbackSettings>(ADMIN_FALLBACK_SETTINGS_API, settings);
+  }
+
+  previewRouting(country: string, operator: string): Observable<RoutingPreview> {
+    return this.http.get<RoutingPreview>(DEVELOPER_ROUTING_PREVIEW_API, {
+      params: { country, operator }
+    });
   }
 }

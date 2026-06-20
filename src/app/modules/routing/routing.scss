@@ -189,6 +189,17 @@ table {
 .fallback-actions { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; padding: 0 1.25rem 1.25rem; }
 .save-error { color: #b91c1c; }
 
+.preview-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(150px, 1fr)) auto;
+    gap: 0.75rem;
+    align-items: end;
+    padding: 1.25rem;
+}
+
+.preview-result { padding: 0 1.25rem 1.25rem; }
+.routing-preview > .save-error { padding: 0 1.25rem; }
+
 @media (max-width: 760px) {
     .routing-container {
         padding: 1rem;
@@ -207,4 +218,5 @@ table {
     }
 
     .fallback-grid { grid-template-columns: 1fr; }
+    .preview-form { grid-template-columns: 1fr; }
 }

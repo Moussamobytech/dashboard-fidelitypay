@@ -67,6 +67,8 @@
     align-items: center; background: transparent; border-radius: 6px; color: #4f46e5; display: inline-flex;
     height: 28px; justify-content: center; width: 28px;
     &:hover { background: #eef2ff; }
+    &.copied { background: #dcfce7; color: #15803d; transform: scale(1.08); }
+    transition: background 150ms ease, color 150ms ease, transform 150ms ease;
     .material-icons-outlined { font-size: 1rem; }
 }
 

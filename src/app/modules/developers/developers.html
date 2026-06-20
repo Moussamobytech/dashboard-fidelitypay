@@ -186,32 +186,6 @@
         <p class="webhook-status" *ngIf="webhookStatusMessage()">{{ webhookStatusMessage() }}</p>
     </section>
 
-    <section class="fp-panel">
-        <div class="fp-panel-header">
-            <div>
-                <h2>Exemple serveur</h2>
-                <p>Le paiement reste asynchrone. Initiez avec curl, stockez le paymentId, puis attendez le webhook marchand.</p>
-            </div>
-        </div>
-        <pre class="fp-code"><code>curl -X POST http://localhost:8060/api/v1/payments/initiate \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: VOTRE_CLE_API" \
-  -H "Idempotency-Key: VOTRE_REFERENCE_UNIQUE" \
-  -d '&#123;
-    "amount": 5000,
-    "country": "SN",
-    "operator": "WAVE",
-    "customer": &#123;
-      "phone": "221776006060",
-      "firstname": "Awa",
-      "lastname": "Diop",
-      "email": "awa@example.com"
-    &#125;,
-    "returnUrl": "https://merchant.example/success",
-    "cancelUrl": "https://merchant.example/cancel"
-  &#125;'</code></pre>
-    </section>
-
     <div class="provider-modal-backdrop" *ngIf="isProviderModalOpen()">
         <section class="provider-modal" role="dialog" aria-modal="true" aria-labelledby="provider-modal-title">
             <header class="provider-modal-header">

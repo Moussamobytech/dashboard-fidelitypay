@@ -27,6 +27,42 @@
         </article>
     </section>
 
+    <section class="card routing-preview" *ngIf="!isAdmin()">
+        <div class="card-header">
+            <h3>Décision de routage actuelle</h3>
+            <span>Lecture seule — aucun paiement n'est créé</span>
+        </div>
+        <div class="preview-form">
+            <app-fp-select [options]="countryOptions()" [value]="previewCountry()" placeholder="Pays"
+                ariaLabel="Pays" (valueChange)="previewCountry.set($any($event)); previewOperator.set(null)"></app-fp-select>
+            <app-fp-select [options]="operatorOptions()" [value]="previewOperator()" placeholder="Opérateur"
+                ariaLabel="Opérateur" (valueChange)="previewOperator.set($any($event))"></app-fp-select>
+            <button class="btn btn-primary" type="button" [disabled]="!previewCountry() || !previewOperator() || previewLoading()"
+                (click)="runRoutingPreview()">Évaluer</button>
+        </div>
+        <p class="save-error" *ngIf="previewError()">{{ previewError() }}</p>
+        <div class="preview-result" *ngIf="routingPreview() as preview">
+            <p *ngIf="preview.selected; else noCandidate">
+                La route Live actuellement sélectionnée serait <strong>{{ preview.selected.provider }}</strong>.
+                Décision calculée par le backend avec <code>{{ preview.scoringVersion }}</code>.
+            </p>
+            <ng-template #noCandidate><p>Aucune route éligible pour cette combinaison.</p></ng-template>
+            <div class="table-container" *ngIf="preview.candidates.length">
+                <table>
+                    <thead><tr><th>Rang</th><th>Provider</th><th>Priorité</th><th>Échecs d'initiation</th><th>Échantillon</th><th>Latence</th><th>Coût</th><th>Score</th></tr></thead>
+                    <tbody><tr *ngFor="let candidate of preview.candidates">
+                        <td>#{{ candidate.rank }}</td><td><strong>{{ candidate.provider }}</strong></td>
+                        <td>{{ candidate.effectivePriority }}</td>
+                        <td>{{ candidate.initiationFailureRate | percent:'1.0-1' }}</td>
+                        <td>{{ candidate.sampleCount }} <small *ngIf="!candidate.sufficientSamples">(insuffisant)</small></td>
+                        <td>{{ formatLatency(candidate.avgLatencyMs) }}</td><td>{{ candidate.cost | number:'1.0-2' }}</td>
+                        <td>{{ candidate.score | number:'1.0-3' }}</td>
+                    </tr></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
     <section class="card">
         <div class="card-header">
             <h3>Priorisation et fallback</h3>

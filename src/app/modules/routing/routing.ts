@@ -1,8 +1,9 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { FallbackSettings, PaymentProviderService, PaymentRouteSetting } from '../../core/services/payment-provider.service';
+import { FallbackSettings, PaymentProviderService, PaymentRouteSetting, RoutingPreview } from '../../core/services/payment-provider.service';
 import { AuthService } from '../../core/services/auth.service';
+import { FpSelectComponent, FpSelectOption } from '../../shared/fp-select/fp-select';
 
 type ProviderPerformance = {
     provider: string;
@@ -16,7 +17,7 @@ type ProviderPerformance = {
 @Component({
     selector: 'app-routing-config',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, FpSelectComponent],
     templateUrl: './routing.html',
     styleUrls: ['./routing.scss']
 })
@@ -28,6 +29,11 @@ export class RoutingConfigComponent implements OnInit {
     isLoading = signal(true);
     fallbackSettings = signal<FallbackSettings | null>(null);
     fallbackSaveState = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    previewCountry = signal<string | null>(null);
+    previewOperator = signal<string | null>(null);
+    routingPreview = signal<RoutingPreview | null>(null);
+    previewLoading = signal(false);
+    previewError = signal('');
     Math = Math;
 
     currentPage = signal(1);
@@ -72,6 +78,12 @@ export class RoutingConfigComponent implements OnInit {
         })).sort((a, b) => b.avgSuccessRate - a.avgSuccessRate);
     });
 
+    countryOptions = computed<FpSelectOption[]>(() => [...new Set(this.visibleRoutes().map(route => route.country))]
+        .sort().map(value => ({ value, label: value })));
+    operatorOptions = computed<FpSelectOption[]>(() => [...new Set(this.visibleRoutes()
+        .filter(route => !this.previewCountry() || route.country === this.previewCountry())
+        .map(route => route.operator))].sort().map(value => ({ value, label: value })));
+
     ngOnInit(): void {
         this.loadRoutes();
         if (this.isAdmin()) this.loadFallbackSettings();
@@ -100,6 +112,18 @@ export class RoutingConfigComponent implements OnInit {
                 this.fallbackSaveState.set('saved');
             },
             error: () => this.fallbackSaveState.set('error')
+        });
+    }
+
+    runRoutingPreview(): void {
+        const country = this.previewCountry();
+        const operator = this.previewOperator();
+        if (!country || !operator) return;
+        this.previewLoading.set(true);
+        this.previewError.set('');
+        this.paymentProviderService.previewRouting(country, operator).subscribe({
+            next: result => { this.routingPreview.set(result); this.previewLoading.set(false); },
+            error: () => { this.routingPreview.set(null); this.previewError.set('Impossible d’évaluer le routage.'); this.previewLoading.set(false); }
         });
     }
 
