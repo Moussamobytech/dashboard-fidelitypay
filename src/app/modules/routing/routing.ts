@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -39,7 +40,7 @@ export class RoutingConfigComponent implements OnInit {
     currentPage = signal(1);
     pageSize = signal(10);
 
-    isAdmin = this.authService.isAdmin;
+    isAdmin = computed(() => this.authService.userRole() === 'ADMIN');
 
     visibleRoutes = computed(() => this.routes().filter(route => route.effectiveEnabled));
 
@@ -123,8 +124,31 @@ export class RoutingConfigComponent implements OnInit {
         this.previewError.set('');
         this.paymentProviderService.previewRouting(country, operator).subscribe({
             next: result => { this.routingPreview.set(result); this.previewLoading.set(false); },
-            error: () => { this.routingPreview.set(null); this.previewError.set('Impossible d’évaluer le routage.'); this.previewLoading.set(false); }
+            error: error => {
+                this.routingPreview.set(null);
+                this.previewError.set(this.routingPreviewErrorMessage(error));
+                this.previewLoading.set(false);
+            }
         });
+    }
+
+    private routingPreviewErrorMessage(error: unknown): string {
+        if (error instanceof HttpErrorResponse) {
+            if (error.status === 401) {
+                return 'Session non autorisée pour évaluer le routage. Reconnecte-toi puis réessaie.';
+            }
+            if (error.status === 403) {
+                return 'Ton compte n’a pas les droits pour évaluer le routage.';
+            }
+            if (error.status === 404) {
+                return 'Aucune route Live éligible pour cette combinaison.';
+            }
+            const backendMessage = error.error?.message || error.error?.error;
+            if (backendMessage) {
+                return backendMessage;
+            }
+        }
+        return 'Impossible d’évaluer le routage.';
     }
 
     loadRoutes(): void {
