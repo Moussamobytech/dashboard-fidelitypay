@@ -32,10 +32,23 @@ export class RoutingConfigComponent implements OnInit {
     fallbackSaveState = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
     previewCountry = signal<string | null>(null);
     previewOperator = signal<string | null>(null);
+    previewAmount = signal(500);
     routingPreview = signal<RoutingPreview | null>(null);
     previewLoading = signal(false);
     previewError = signal('');
     Math = Math;
+
+    private readonly countryNames: Record<string, string> = {
+        BJ: 'Bénin',
+        BF: 'Burkina Faso',
+        CI: "Côte d’Ivoire",
+        CM: 'Cameroun',
+        INT: 'International',
+        ML: 'Mali',
+        NE: 'Niger',
+        SN: 'Sénégal',
+        TG: 'Togo'
+    };
 
     currentPage = signal(1);
     pageSize = signal(10);
@@ -80,7 +93,8 @@ export class RoutingConfigComponent implements OnInit {
     });
 
     countryOptions = computed<FpSelectOption[]>(() => [...new Set(this.visibleRoutes().map(route => route.country))]
-        .sort().map(value => ({ value, label: value })));
+        .sort((a, b) => this.countryName(a).localeCompare(this.countryName(b)))
+        .map(value => ({ value, label: this.countryName(value) })));
     operatorOptions = computed<FpSelectOption[]>(() => [...new Set(this.visibleRoutes()
         .filter(route => !this.previewCountry() || route.country === this.previewCountry())
         .map(route => route.operator))].sort().map(value => ({ value, label: value })));
@@ -119,10 +133,11 @@ export class RoutingConfigComponent implements OnInit {
     runRoutingPreview(): void {
         const country = this.previewCountry();
         const operator = this.previewOperator();
-        if (!country || !operator) return;
+        const amount = Number(this.previewAmount());
+        if (!country || !operator || !Number.isFinite(amount) || amount < 0) return;
         this.previewLoading.set(true);
         this.previewError.set('');
-        this.paymentProviderService.previewRouting(country, operator).subscribe({
+        this.paymentProviderService.previewRouting(country, operator, amount).subscribe({
             next: result => { this.routingPreview.set(result); this.previewLoading.set(false); },
             error: error => {
                 this.routingPreview.set(null);
@@ -191,6 +206,10 @@ export class RoutingConfigComponent implements OnInit {
         return candidate ? `${candidate.providerCode} #${candidate.effectivePriority}` : 'Aucun';
     }
 
+    countryName(countryCode: string): string {
+        return this.countryNames[countryCode] || countryCode;
+    }
+
     routeStatus(route: PaymentRouteSetting): 'Active' | 'Dégradée' {
         if ((route.failureRate || 0) > 0.1 || (route.avgLatency || 0) > 1500) return 'Dégradée';
         return 'Active';
@@ -200,8 +219,35 @@ export class RoutingConfigComponent implements OnInit {
         return `${Math.max(0, 100 - ((route.failureRate || 0) * 100)).toFixed(1)}%`;
     }
 
+    feeConfig(route: Pick<PaymentRouteSetting, 'feeType' | 'feeRate' | 'fixedFee' | 'cost'>): string {
+        if (route.feeType === 'FIXED') {
+            return `${this.formatMoney(route.fixedFee || route.cost)} fixe`;
+        }
+        return `${this.formatNumber(route.feeRate || route.cost)}%`;
+    }
+
+    estimatedFee(value: number): string {
+        return this.formatMoney(value);
+    }
+
+    amountRange(route: Pick<PaymentRouteSetting, 'minAmount' | 'maxAmount'>): string {
+        const min = route.minAmount || 0;
+        const max = route.maxAmount;
+        if (min <= 0 && (max === undefined || max === null)) return 'Aucune limite';
+        if (max !== undefined && max !== null) return `${this.formatMoney(min)} – ${this.formatMoney(max)}`;
+        return `Min. ${this.formatMoney(min)}`;
+    }
+
     formatLatency(value: number): string {
         return value > 0 ? `${(value / 1000).toFixed(2)}s` : 'N/A';
+    }
+
+    private formatMoney(value: number): string {
+        return `${this.formatNumber(value)} XOF`;
+    }
+
+    private formatNumber(value: number): string {
+        return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(value || 0);
     }
 
     private average(values: number[]): number {

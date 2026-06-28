@@ -96,6 +96,21 @@ export class ProviderRoutesComponent implements OnInit {
         return this.countryNames[countryCode] || countryCode;
     }
 
+    feeConfig(route: PaymentRouteSetting): string {
+        if (route.feeType === 'FIXED') {
+            return `${this.formatNumber(route.fixedFee || route.cost)} XOF fixe`;
+        }
+        return `${this.formatNumber(route.feeRate || route.cost)}%`;
+    }
+
+    amountRange(route: PaymentRouteSetting): string {
+        const min = route.minAmount || 0;
+        const max = route.maxAmount;
+        if (min <= 0 && (max === undefined || max === null)) return 'Aucune limite';
+        if (max !== undefined && max !== null) return `${this.formatNumber(min)} – ${this.formatNumber(max)} XOF`;
+        return `Min. ${this.formatNumber(min)} XOF`;
+    }
+
     savePriority(route: PaymentRouteSetting): void {
         const priority = Number(this.priorityDrafts[route.routeId]);
         if (!Number.isInteger(priority) || priority < 1) {
@@ -128,5 +143,9 @@ export class ProviderRoutesComponent implements OnInit {
     private failRouteUpdate(message: string): void {
         this.actionError.set(message);
         this.savingRouteId.set(null);
+    }
+
+    private formatNumber(value: number): string {
+        return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(value || 0);
     }
 }

@@ -74,6 +74,11 @@ export interface PaymentRouteSetting {
   merchantPriority?: number | null;
   effectivePriority: number;
   cost: number;
+  feeType: 'PERCENT' | 'FIXED';
+  feeRate: number;
+  fixedFee: number;
+  minAmount: number;
+  maxAmount?: number | null;
   avgLatency: number;
   failureRate: number;
   selectionScore?: number | null;
@@ -96,6 +101,11 @@ export interface RoutingCandidate {
   flowType: string;
   effectivePriority: number;
   cost: number;
+  feeType: 'PERCENT' | 'FIXED';
+  feeRate: number;
+  fixedFee: number;
+  minAmount: number;
+  maxAmount?: number | null;
   avgLatencyMs: number;
   initiationFailureRate: number;
   sampleCount: number;
@@ -107,6 +117,7 @@ export interface RoutingPreview {
   country: string;
   operator: string;
   environment: string;
+  amount: number;
   scoringVersion: string;
   evaluatedAt: string;
   selected: RoutingCandidate | null;
@@ -178,9 +189,9 @@ export class PaymentProviderService {
     return this.http.put<FallbackSettings>(ADMIN_FALLBACK_SETTINGS_API, settings);
   }
 
-  previewRouting(country: string, operator: string): Observable<RoutingPreview> {
+  previewRouting(country: string, operator: string, amount: number): Observable<RoutingPreview> {
     return this.http.get<RoutingPreview>(DEVELOPER_ROUTING_PREVIEW_API, {
-      params: { country, operator }
+      params: { country, operator, amount }
     });
   }
 }

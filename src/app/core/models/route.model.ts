@@ -20,6 +20,11 @@ export interface Route {
     availability: boolean;
     avgLatency: number; // in milliseconds
     cost: number; // e.g. 0.0 or 0.5
+    feeType?: 'PERCENT' | 'FIXED';
+    feeRate?: number;
+    fixedFee?: number;
+    minAmount?: number;
+    maxAmount?: number | null;
     failureRate: number; // e.g. 0.1 for 10%
     priority: number; // Lower is better
     successRate?: string; // e.g. "90%"

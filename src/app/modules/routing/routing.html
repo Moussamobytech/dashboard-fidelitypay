@@ -37,25 +37,31 @@
                 ariaLabel="Pays" (valueChange)="previewCountry.set($any($event)); previewOperator.set(null)"></app-fp-select>
             <app-fp-select [options]="operatorOptions()" [value]="previewOperator()" placeholder="Opérateur"
                 ariaLabel="Opérateur" (valueChange)="previewOperator.set($any($event))"></app-fp-select>
-            <button class="btn btn-primary" type="button" [disabled]="!previewCountry() || !previewOperator() || previewLoading()"
+            <label class="amount-field">
+                Montant XOF
+                <input type="number" min="0" step="1" [ngModel]="previewAmount()" (ngModelChange)="previewAmount.set(+$event)">
+            </label>
+            <button class="btn btn-primary" type="button" [disabled]="!previewCountry() || !previewOperator() || previewLoading() || previewAmount() < 0"
                 (click)="runRoutingPreview()">Évaluer</button>
         </div>
         <p class="save-error" *ngIf="previewError()">{{ previewError() }}</p>
         <div class="preview-result" *ngIf="routingPreview() as preview">
             <p *ngIf="preview.selected; else noCandidate">
                 La route Live actuellement sélectionnée serait <strong>{{ preview.selected.provider }}</strong>.
-                Décision calculée par le backend avec <code>{{ preview.scoringVersion }}</code>.
+                Frais estimés pour <strong>{{ estimatedFee(preview.amount) }}</strong>, calculés par le backend avec <code>{{ preview.scoringVersion }}</code>.
             </p>
             <ng-template #noCandidate><p>Aucune route éligible pour cette combinaison.</p></ng-template>
             <div class="table-container" *ngIf="preview.candidates.length">
                 <table>
-                    <thead><tr><th>Rang</th><th>Provider</th><th>Priorité</th><th>Échecs d'initiation</th><th>Échantillon</th><th>Latence</th><th>Coût</th><th>Score</th></tr></thead>
+                    <thead><tr><th>Rang</th><th>Provider</th><th>Priorité</th><th>Échecs d'initiation</th><th>Échantillon</th><th>Latence</th><th>Tarif</th><th>Frais estimés</th><th>Score</th></tr></thead>
                     <tbody><tr *ngFor="let candidate of preview.candidates">
                         <td>#{{ candidate.rank }}</td><td><strong>{{ candidate.provider }}</strong></td>
                         <td>{{ candidate.effectivePriority }}</td>
                         <td>{{ candidate.initiationFailureRate | percent:'1.0-1' }}</td>
                         <td>{{ candidate.sampleCount }} <small *ngIf="!candidate.sufficientSamples">(insuffisant)</small></td>
-                        <td>{{ formatLatency(candidate.avgLatencyMs) }}</td><td>{{ candidate.cost | number:'1.0-2' }}</td>
+                        <td>{{ formatLatency(candidate.avgLatencyMs) }}</td>
+                        <td>{{ feeConfig(candidate) }}</td>
+                        <td>{{ estimatedFee(candidate.cost) }}</td>
                         <td>{{ candidate.score | number:'1.0-3' }}</td>
                     </tr></tbody>
                 </table>
@@ -77,27 +83,29 @@
                         <th>Provider</th>
                         <th>Priorité</th>
                         <th>Fallback disponible</th>
-                        <th>Coût</th>
+                        <th>Tarif</th>
+                        <th>Montant autorisé</th>
                         <th>Latence</th>
                         <th>Succès</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr *ngFor="let route of paginatedRoutes()">
-                        <td>{{ route.country }}</td>
+                        <td>{{ countryName(route.country) }}</td>
                         <td>{{ route.operator }}</td>
                         <td><strong>{{ route.providerCode }}</strong></td>
                         <td><span class="priority-badge">#{{ route.effectivePriority }}</span></td>
                         <td>{{ fallbackFor(route) }}</td>
-                        <td>{{ route.cost | number:'1.0-2' }}</td>
+                        <td>{{ feeConfig(route) }}</td>
+                        <td>{{ amountRange(route) }}</td>
                         <td>{{ formatLatency(route.avgLatency) }}</td>
                         <td>{{ successRate(route) }}</td>
                     </tr>
                     <tr *ngIf="!isLoading() && paginatedRoutes().length === 0">
-                        <td colspan="8" class="empty-state">Aucune route active disponible.</td>
+                        <td colspan="9" class="empty-state">Aucune route active disponible.</td>
                     </tr>
                     <tr *ngIf="isLoading()">
-                        <td colspan="8" class="empty-state">Chargement des routes...</td>
+                        <td colspan="9" class="empty-state">Chargement des routes...</td>
                     </tr>
                 </tbody>
             </table>
@@ -132,8 +140,8 @@
                 </div>
                 <div class="metrics">
                     <div>
-                        <small>Coût</small>
-                        <strong>{{ provider.avgCost | number:'1.0-2' }}</strong>
+                        <small>Tarif moyen</small>
+                        <strong>{{ provider.avgCost | number:'1.0-2' }}%</strong>
                     </div>
                     <div>
                         <small>Latence</small>

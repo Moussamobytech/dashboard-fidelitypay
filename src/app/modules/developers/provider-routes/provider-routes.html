@@ -38,6 +38,8 @@
                     <th>Pays</th>
                     <th>Opérateur</th>
                     <th>Flux</th>
+                    <th>Tarif</th>
+                    <th>Montant autorisé</th>
                     <th>Disponibilité</th>
                     <th>Priorité</th>
                     <th>État</th>
@@ -48,6 +50,8 @@
                     <td>{{ countryName(route.country) }}</td>
                     <td>{{ route.operator }}</td>
                     <td><code>{{ route.flowType }}</code></td>
+                    <td>{{ feeConfig(route) }}</td>
+                    <td>{{ amountRange(route) }}</td>
                     <td>
                         <div class="capability-list">
                             <span class="capability-badge" *ngIf="route.liveEnabled">Live</span>
@@ -77,7 +81,7 @@
                     </td>
                 </tr>
                 <tr *ngIf="filteredRoutes().length === 0">
-                    <td colspan="6" class="empty-state">Aucune route ne correspond à ces filtres.</td>
+                    <td colspan="8" class="empty-state">Aucune route ne correspond à ces filtres.</td>
                 </tr>
             </tbody>
         </table>
